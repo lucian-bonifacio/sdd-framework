@@ -6,6 +6,15 @@ Este repositório implementa uma ferramenta genérica de organização documenta
 PRD e specs representam o contrato atual. IDEIA.md é contexto histórico, não
 procedimento obrigatório. Responder ao mantenedor de forma breve e em português.
 
+## Retomada de sessão
+Antes de iniciar trabalho, ler CHECKPOINT.md da raiz se existir, mesmo sem acesso
+à conversa anterior. Conferir seu estado com os arquivos, tickets e Git atuais;
+o checkpoint orienta a retomada, mas não substitui as fontes vigentes.
+Respeitar adiamentos e limites ali registrados. Não iniciar piloto, Release ou
+publicação apenas porque uma sessão nova foi aberta; aguardar nova solicitação
+do mantenedor quando essas ações tiverem sido adiadas. Ao pedido de checkpoint,
+registrar trabalho parcial, resultados reais, pendências e próximo passo.
+
 ## Fontes de edição neste repositório
 
 Este projeto desenvolve o framework e utiliza uma instalação local dele. Antes

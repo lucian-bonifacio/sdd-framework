@@ -1,52 +1,76 @@
 ---
-status: closed
+status: active
 updated: 2026-11-06
 task: none
 ---
-# Checkpoint — entrega inicial do SDD Framework
+# Checkpoint — pausa após envio ao GitHub
 
 ## Objetivo e tarefa atual
-Entregar a versão 0.1.0 conforme autorização do mantenedor. Escopo local concluído;
-não há tarefa de implementação em andamento.
+Pausa solicitada pelo mantenedor em 2026-11-06. Implementação inicial entregue;
+nenhuma tarefa está em execução. Não iniciar teste no consumidor nem criar tag,
+Release, instalador ou publicação adicional até nova solicitação do mantenedor.
+O ponto atual é compreender e experimentar o fluxo num consumidor, depois de
+avaliar a pendência de CI registrada abaixo.
 
 ## Estado do trabalho
-Continuidade independente corrigida: o consumidor recebe scripts/atualizar_roadmap.py,
-com instruções locais para o agente executá-lo e conferir o resultado. Script
-validado em Python isolado, fora do projeto e sem .sdd/ ou pacote SDD. A CLI é
-um auxiliar opcional de manutenção, não requisito para manter o roadmap.
+- CLI Inicie/Update/Conferência, uma skill SDD, treze templates e script local do
+  consumidor implementados. As seis SPECs, quinze tickets de implementação e seis
+  tickets de adoção anteriores estão concluídos; uma nova pendência de CI foi aberta.
+- Scripts mecânicos pertencem ao consumidor e são acionados pelo agente seguindo
+  AGENTS/skill. scripts/atualizar_roadmap.py funciona sem pacote SDD, checkout ou .sdd/.
+- ROADMAP é a visão geral de tarefas/estados/ações humanas; tickets são a fonte.
+  Evidência extensa fica junto à entrega, não em docs/VALIDATION.md global.
+- 58 testes locais passaram anteriormente em Python 3.14.4/Linux. A skill e o
+  pacote portátil foram validados. Não se presume sucesso em agentes reais.
+- Foi criado e enviado o repositório público
+  https://github.com/lucian-bonifacio/sdd-framework. O usuário configurou SSH e
+  informou sucesso do envio; a branch main foi confirmada no commit
+  d22fb7b8bdbd50281a7b7cf413bea977ec6948b6, Implementa versão inicial do SDD Framework.
+- A autenticação SSH do terminal foi confirmada pelo usuário como lucian-bonifacio.
+  O Git local agora é operacional: main, origin via SSH; não repetir a afirmação
+  antiga de que este diretório não tem um repositório Git utilizável.
+- Antes deste checkpoint, git status --short estava vazio. Este pedido altera
+  AGENTS.md, CHECKPOINT.md, o índice/ticket de distribuição e a visão do roadmap.
+  Essas mudanças são locais; não foram commitadas nem enviadas nesta pausa.
 
-O ROADMAP agora concentra a visão gerada de todas as tarefas e ações do usuário.
-O relatório global foi migrado para evidência da entrega; não é mais uma fonte
-de acompanhamento. Critérios automáticos suficientes encerram tarefas sem aceite
-manual adicional. Ajuste registrado em specs/003-conferencia/tasks/T-003.md.
-
-CLI Inicie/Update/Conferência implementada, uma skill SDD genérica, treze templates,
-fluxo e contratos documentais. Ajuste posterior inclui `.codex/config.toml` neutro,
-preservação da configuração do consumidor e preflight de permissões. Seis SPECs e quinze tickets de implementação, além de
-seis tickets de adoção do próprio repositório, estão concluídos.
-58 testes locais passaram em Python 3.14.4/Linux. A skill passou no validador.
-O executável dist/sdd.pyz foi construído e o teste executou init/check num consumidor
-fora do checkout. Conferência delivery passou sem impedimentos estruturais.
-[Evidências, identidade dos fontes e limites](specs/006-distribuicao/validation/001-entrega-inicial.md).
-Todos os arquivos são locais; .git não contém metadados operacionais para commit.
-CI remoto, instalação pip, sessão real em agentes e publicação não foram executados.
+CI remoto consultado em 2026-11-06, aproximadamente 17:51 no fuso America/Sao_Paulo:
+[execução 42287488501](https://github.com/lucian-bonifacio/sdd-framework/actions/runs/42287488501)
+terminou em failure. Ubuntu e macOS passaram em Python 3.11/3.14. Windows falhou
+nas duas versões no passo de testes. Os logs não foram investigados e a causa
+não foi presumida. Pendência registrada no [ticket T-003](specs/006-distribuicao/tasks/T-003.md).
 
 ## Decisões e pendências
-Contrato atual: [PRD](docs/PRD.md), [arquitetura](docs/ARCHITECTURE.md) e
-[ADR-001](docs/decisions/ADR-001.md). Fontes canônicas dos recursos ficam em
-src/sdd_framework/assets; snapshot do próprio projeto está atualizado.
-AI Memory continua proposta não incorporada em [ITEM-001](docs/inbox/ITEM-001.md).
-O consumidor mantém independência operacional; não há deploy ou executor de agentes.
+- Contrato atual no PRD, arquitetura e specs. IDEIA.md é inspiração histórica.
+- Init cria a estrutura; o agente do consumidor preenche os documentos e conduz
+  o fluxo. A continuidade usa instruções e ferramentas locais, sem exigir CLI SDD.
+- Critérios de aceitação, testes e revisões aplicáveis atendidos permitem concluir
+  sem aceite manual adicional. Se houver dependência humana explícita, registrar
+  a execução do usuário e verificar o resultado antes de concluir.
+- AI Memory continua proposta na [INBOX ITEM-001](docs/inbox/ITEM-001.md).
+- Nenhum piloto com agente real nem instalação via pipx foi confirmado. O comando
+  sugerido foi pipx install git+https://github.com/lucian-bonifacio/sdd-framework.git@main.
+  Isso é orientação, não evidência de instalação executada.
+- Não foi criada Release/tag. A versão interna do pacote é 0.1.0; não confundir
+  isso com uma Release publicada. O usuário adiou expressamente essa atividade.
+- Instalador próprio semelhante ao install.sh do AI Memory foi discutido como
+  possibilidade futura, sem aprovação de implementação. Licença segue indefinida.
+- O AGENTS.md já orientava consultar CHECKPOINT.md; agora possui seção explícita
+  de retomada, fora do bloco administrado, incluindo respeito aos adiamentos.
 
 ## Próximo passo
-Usar a versão num projeto piloto com o agente escolhido e avaliar a qualidade
-semântica dos artefatos e a retomada real. Um próximo ciclo deve abrir tickets
-para achados concretos. Publicação e licença dependem de decisão do mantenedor;
-nenhum trabalho externo é presumido como autorizado.
+Aguardar o mantenedor retomar. Ao retomar: ler este checkpoint, conferir Git e
+ROADMAP e alinhar se o foco será investigar T-003 do CI ou preparar o piloto.
+O ticket de CI está pending, com authorization: pending, e não foi iniciado.
+Quando o piloto for solicitado, instalar/usar a ferramenta num projeto de teste,
+executar init no terminal antes de abrir o agente e acompanhar o preenchimento
+progressivo. Não publicar Release ou instalar globalmente por iniciativa própria.
 
 ## Leitura para retomada
-- [AGENTS](AGENTS.md)
+- [AGENTS.md](AGENTS.md)
+- [Roadmap e estados](docs/ROADMAP.md)
+- [Pendência de CI no Windows](specs/006-distribuicao/tasks/T-003.md)
+- [Guia pasta a pasta e arquivo a arquivo](docs/GUIA-DE-FUNCIONAMENTO.md)
 - [README](README.md)
-- [Roadmap](docs/ROADMAP.md)
 - [Fluxo e contratos](docs/WORKFLOW.md)
-- [Validação](specs/006-distribuicao/validation/001-entrega-inicial.md)
+- [PRD](docs/PRD.md)
+- [Arquitetura](docs/ARCHITECTURE.md)

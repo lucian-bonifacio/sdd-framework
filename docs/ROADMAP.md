@@ -30,9 +30,9 @@ integração de memória é requisito para usar a versão atual.
 
 Visão derivada dos tickets, mantida pelo agente conforme AGENTS.md. Edite estados nos tickets e atualize este resumo; atualize com o script local indicado em AGENTS.md.
 
-Atualizado em: 2026-11-06T19:37:57+00:00.
+Atualizado em: 2026-11-06T20:52:46+00:00.
 
-**21/21 tarefas concluídas.** Canceladas: 0. O resumo não substitui as evidências dos tickets.
+**21/22 tarefas concluídas.** Canceladas: 0. O resumo não substitui as evidências dos tickets.
 
 ### Adequação inicial ao SDD
 
@@ -89,6 +89,7 @@ Atualizado em: 2026-11-06T19:37:57+00:00.
 |---|---|---|---|---|
 | [T-001](../specs/006-distribuicao/tasks/T-001.md) | Implementar contrato: CLI, distribuição e qualidade | Concluída | Agente | passed |
 | [T-002](../specs/006-distribuicao/tasks/T-002.md) | Validar entrega: CLI, distribuição e qualidade | Concluída | Agente | passed |
+| [T-003](../specs/006-distribuicao/tasks/T-003.md) | Investigar e corrigir falhas do CI no Windows | Pendente | Agente | not\_verified |
 
 ### Ações pendentes do usuário
 
