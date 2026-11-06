@@ -1,0 +1,8 @@
+# Configuração Codex deste projeto, preparada pelo SDD Framework.
+# Este TOML é intencionalmente neutro: sem sobrescritas, o Codex mantém
+# os valores definidos nas demais camadas de configuração e seus defaults.
+# Ajustes de modelo, permissões e integrações pertencem ao mantenedor.
+# O SDD preserva este arquivo depois da criação, inclusive durante update.
+# As instruções do projeto ficam em AGENTS.md; a skill em .agents/skills/sdd/.
+# O Codex carrega configurações de projeto somente quando ele é confiável.
+# Referência: https://learn.chatgpt.com/docs/config-file/config-basic

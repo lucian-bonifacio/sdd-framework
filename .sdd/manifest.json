@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "files": {
+    ".sdd/framework/templates/TASK.md": "50b9f7af24e1c72cc9e4719fdb20fbdc0d7e0e012ff8c00a7f6438f9621237b8",
+    ".sdd/framework/templates/ADR.md": "effc4bc167745918ee3d8ef59b9fa87f30f21893b5951ce11e471af4637ac0aa",
+    ".sdd/framework/templates/DESIGN.md": "c1dee9f8459b3a820c7604bd168da26aa281c2a0bd63eb6aefdf259fc2e9a9c1",
+    ".sdd/framework/templates/CHECKPOINT.md": "b7c53dec12dff6151a939c56ce1c8cb52d1a6df03c4bd69f5fea6f9fa0cbde7d",
+    ".sdd/framework/templates/PRD.md": "95b87983ef6c441379923355ddccee50364f8322f88e076691443c317aa836ef",
+    ".sdd/framework/templates/TASKS.md": "29c6c2e0e47812c7ed7b01586e84a50af04a8353614bc27b1f9030123efe7b37",
+    ".sdd/framework/templates/SPEC.md": "2ddfe8f4199b4e6582ac0efec8e97069b2336ad43eb0bb6f54ce331ed1040da1",
+    ".sdd/framework/templates/ARCHITECTURE.md": "2fa417b4a02e208b4e8cbf1f2906e35ae24f5c0c39290c19afc121178f98c8b2",
+    ".sdd/framework/templates/ROADMAP.md": "247edacca396fbb59064d3c52827de05b2147962211075f5b1e8312adb521bf3",
+    ".sdd/framework/templates/INBOX.md": "b311fcc752e48178469f8958211d86b73d554849daef294bec92118c7b13d84c",
+    ".sdd/framework/skill/references/ARTIFACTS.md": "a48f90c1e18a537c1e994f85b158b413c1576693d3cac11ad94aed4ef071ec32",
+    ".sdd/framework/skill/references/WORKFLOW.md": "78ff83145aa27490b0f44067d5b7ff00e2e8b8d8a71d23a59a3f77865d30b05d",
+    ".sdd/framework/skill/SKILL.md": "a238c12ee660bd492f91634477d8e2a34761ab5bba5e72e40a2e5cc78a3516ec",
+    ".sdd/framework/policy.json": "4bf9a4e4b5b93d7b5c6dbb7266d9e63d0c618c2c9f221cfe4f509ff394053b9b",
+    ".sdd/framework/bundle.json": "b6c07d5042bf46c1d8a8bc8ecd9b0aee0cb6eaa4a6dbd91b7be9affdfff3df56",
+    ".sdd/framework/templates/VALIDATION.md": "3edd84beba9820e2052929b13f31bf159180796beb747d23a02e0c544166caae",
+    ".sdd/framework/templates/README.md": "e214d871bc65c6a89a3f84e762958b8dd73f24a675631b466e8542c28b0945c3",
+    ".sdd/framework/templates/AGENTS.md": "c35a4a66a51bf514ee4dd6f2014a980ea6dc831a7746e207b1e70dadd775682f",
+    ".sdd/framework/integrations/codex/config.toml": "d4dfe3621086f46d394764aecfdfb75a5f127202c9f07d576ceb6c1b46bf21f0",
+    ".sdd/framework/scripts/atualizar_roadmap.py": "fd728c78e9fb2b27f7c3fefd8c26ae1b8a883d75ade5eb363294d5bf179cabe2"
+  },
+  "blocks": {
+    "AGENTS.md": "aae5ab42520a7ac068b8f4578b3683cf958e6a79eff9b0679ad90540ad20efda"
+  }
+}

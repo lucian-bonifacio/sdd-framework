@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "framework_version": "0.1.0",
+  "mode": "existing",
+  "agent": "none",
+  "phase": "delivery",
+  "document_paths": {},
+  "interface": false,
+  "design_system": null,
+  "update_source": null
+}
