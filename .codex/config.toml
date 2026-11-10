@@ -1,0 +1,18 @@
+# Configuração local deste projeto; não altera ~/.codex/config.toml.
+# Carregada pelo Codex somente em projetos confiáveis. Abrir nova sessão após editar.
+# Perfis de permissões: https://learn.chatgpt.com/docs/permissions
+# sandbox_mode/--sandbox em outras camadas podem prevalecer sobre este perfil.
+# Políticas administradas e restrições da sessão continuam aplicáveis.
+# Update migra o modelo anterior apenas quando intacto e de origem verificada;
+# configurações personalizadas são preservadas para reconciliação pelo mantenedor.
+
+default_permissions = "project-agents"
+
+[permissions.project-agents]
+description = "Workspace com leitura e escrita nos diretórios locais dos agentes."
+extends = ":workspace"
+
+[permissions.project-agents.filesystem.":workspace_roots"]
+".codex" = "write"
+".agents" = "write"
+".claude" = "write"

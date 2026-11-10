@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import copy
 import contextlib
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
-import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -15,619 +16,700 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sdd_framework.checks import create_remediation, inspect
 from sdd_framework.cli import main
-from sdd_framework.markdown import metadata, render
-from sdd_framework.project import AGENT_BLOCK, END, START, bundle, initialize, update
-from sdd_framework.progress import START as PROGRESS_START, update_roadmap
-from sdd_framework.storage import SDDError, atomic_apply, json_bytes, project_lock, read_json, safe_path
+from sdd_framework import __version__
+from sdd_framework.changes import LOG_START, LOG_END, log_section, sections
+from sdd_framework.project import (
+    AGENT_BLOCK, CLAUDE_BLOCK, END, GOV_END, GOV_START, GOVERNOR,
+    LEGACY_BLOCK, MANIFEST, OLD_END, OLD_FLOW, OLD_START, START,
+    bundle, initialize, managed_section, update,
+)
+from sdd_framework.execution import EXECUTION, installed_hash, operation
+from sdd_framework.storage import SDDError, atomic_apply, digest, json_bytes, read_json, safe_path
 
 
-class ProjectTests(unittest.TestCase):
+class InstallerTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(prefix="sdd-test-")
         self.addCleanup(self.directory.cleanup)
-        self.root = Path(self.directory.name) / "project"
+        self.base = Path(self.directory.name)
+        self.root = self.base / "projeto"
         self.root.mkdir()
 
-    def put(self, path, content):
-        target = self.root / path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(content, encoding="utf-8")
+    def put(self, name, text):
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(text.encode())
+        return path
 
-    def config(self, **values):
-        config = read_json(self.root, ".sdd/config.json")
-        config.update(values)
-        self.put(".sdd/config.json", json_bytes(config).decode())
+    def snapshot(self):
+        return {p.relative_to(self.root).as_posix(): p.read_bytes()
+                for p in self.root.rglob("*") if p.is_file() and not p.is_symlink()}
 
-    def complete_adoption(self):
-        for path in (self.root / ".sdd/adoption/tasks").glob("*.md"):
-            text = path.read_text().replace("status: pending", "status: done").replace("status: ready", "status: done")
-            text = text.replace("verification: not_verified", "verification: passed").replace("Ainda não executada.", "Gate executado e conteúdo revisado com usuário.")
-            path.write_text(text)
+    def release(self, version=None, change=True):
+        path = self.base / "release"
+        shutil.copytree(ROOT / "src/sdd_framework/assets", path)
+        info = json.loads((path / "bundle.json").read_text())
+        major, minor, _ = map(int, __version__.split("."))
+        info["version"] = version or f"{major}.{minor + 1}.0"
+        (path / "bundle.json").write_bytes(json_bytes(info))
+        governor = path / GOVERNOR
+        if change:
+            governor.write_bytes(governor.read_bytes().replace(b"## 4.", b"Instrucao adicionada na atualizacao.\n\n## 4.", 1))
+        return path
 
-    def project_documents(self):
-        self.put("README.md", "# Produto\n\n## Objetivo\nOrganizar livros.\n\n## Como começar\nExecutar os comandos do projeto.\n")
-        for path, headings in {
-            "docs/PRD.md": ["Problema e público", "Objetivos e escopo", "Requisitos", "Restrições e pendências"],
-            "docs/ARCHITECTURE.md": ["Contexto técnico", "Componentes e contratos", "Restrições e segurança", "Verificação"],
-            "docs/ROADMAP.md": ["Entregas", "Prioridades e dependências"],
-        }.items():
-            self.put(path, "---\nstatus: accepted\n---\n# Documento\n\n" + "\n\n".join(f"## {heading}\nConteúdo definido para o cenário de teste." for heading in headings) + "\n")
-        self.config(interface=False)
-        with (self.root / "AGENTS.md").open("a", encoding="utf-8") as output:
-            output.write("\n## Contexto do projeto\nCatálogo de livros.\n\n## Comandos e verificações\nUsar os comandos do projeto.\n\n## Convenções e restrições\nPreservar contratos.\n")
+    def legacy(self):
+        resources = {
+            ".sdd/framework/templates/PRD.md": b"# Modelo antigo\n",
+            ".sdd/framework/policy.json": b"{}\n",
+            ".agents/skills/sdd/SKILL.md": b"Skill anterior\n",
+            ".agents/skills/sdd/references/WORKFLOW.md": b"Fluxo anterior\n",
+            ".claude/skills/sdd/SKILL.md": b"Skill anterior\n",
+        }
+        old_agent = START + "\nSiga docs/FLUXO.md automaticamente.\n" + END
+        old_flow = OLD_START + "\n## Procedimento padrao\nFluxo antigo.\n" + OLD_END
+        blocks = {"AGENTS.md": old_agent, "CLAUDE.md": old_agent, OLD_FLOW: old_flow}
+        for name, data in resources.items():
+            self.put(name, data.decode())
+        for name, block in blocks.items():
+            self.put(name, "Conteudo proprio antes.\r\n\r\n" + block + "\r\n\r\nPlano aprovado e historico preservado.\r\n")
+        self.put(".sdd/config.json", '{"mode":"existing","phase":"implementation","custom":true}\n')
+        self.put(".sdd/adoption/tasks/T-001.md", "Ticket concluido anteriormente.\n")
+        self.put("scripts/atualizar_roadmap.py", "# Script proprio.\n")
+        self.put(MANIFEST, json_bytes({
+            "schema_version": 1, "version": "0.1.0",
+            "files": {n: digest(v) for n, v in resources.items()},
+            "blocks": {n: digest(v.encode()) for n, v in blocks.items()},
+        }).decode())
+        return resources, blocks
 
-    def feature(self, folder="001-livros", status="ready", executor="agent", authorization="approved", dependencies=None):
-        base = f"specs/{folder}"
-        self.put(base + "/SPEC.md", f"---\nid: {folder}\nstatus: accepted\ndesign: inline\n---\n# Livros\n\n## Objetivo e escopo\nCadastrar livros.\n\n## Requisitos\n- RF-001: O usuário cadastra um livro.\n\n## Critérios de aceitação\n- CA-001: Ao informar título, livro é salvo.\n\n## Design técnico\nUsar repositório de livros existente.\n\n## Pendências\nNenhuma.\n")
-        self.put(base + "/TASKS.md", "# Tarefas\n\n## Índice\n- [T-001](tasks/T-001.md)\n\n## Ordem e acompanhamento\nSeguir dependências.\n")
-        template = bundle()["templates/TASK.md"].decode()
-        text = render(template, task_id="T-001", title="Cadastrar livro")
-        text = text.replace("status: pending", "status: " + status).replace("executor: agent", "executor: " + executor).replace("authorization: pending", "authorization: " + authorization)
-        text = text.replace("dependencies: []", "dependencies: " + json.dumps(dependencies or []))
-        import re
-        text = re.sub(r"\[PREENCHER:[^\]]+\]", "Cadastrar livro conforme RF-001 e verificar persistência.", text)
-        self.put(base + "/tasks/T-001.md", text)
-        return base + "/tasks/T-001.md"
-
-    def errors(self, phase=None, spec=None):
-        return [i for i in inspect(self.root, phase, spec)["issues"] if i["severity"] == "error"]
-
-    def test_progressive_init_is_idempotent(self):
+    def test_init_prepares_only_instructions_and_configuration(self):
         result = initialize(self.root)
-        self.assertEqual(result["mode"], "new")
-        self.assertFalse((self.root / "docs/PRD.md").exists())
-        self.assertFalse((self.root / "CHECKPOINT.md").exists())
-        self.assertEqual(len(list((self.root / ".sdd/adoption/tasks").glob("*.md"))), 6)
-        self.assertEqual(initialize(self.root)["changed"], [])
-        self.assertTrue(inspect(self.root)["structural_pass"])
-        self.assertEqual(inspect(self.root)["executable"], [".sdd/adoption/tasks/T-001.md"])
+        self.assertFalse(result["governor_executed"])
+        self.assertTrue((self.root / GOVERNOR).is_file())
+        self.assertTrue((self.root / "docs/padroes/PRD.md").is_file())
+        self.assertTrue((self.root / ".codex/config.toml").is_file())
+        for name in ("README.md", "docs/PRD.md", "docs/ROADMAP.md", "docs/FLUXO.md",
+                     "specs", "src", "scripts", ".github", ".sdd/adoption", ".sdd/config.json"):
+            self.assertFalse((self.root / name).exists(), name)
+        self.assertEqual(managed_section((self.root / "AGENTS.md").read_text()), AGENT_BLOCK)
+        self.assertEqual(managed_section((self.root / "CLAUDE.md").read_text()), CLAUDE_BLOCK)
 
-    def test_native_directories_and_neutral_codex_config(self):
-        initialize(self.root, agent="both")
-        self.assertTrue((self.root / ".claude/skills/sdd/SKILL.md").is_file())
-        config = self.root / ".codex/config.toml"
-        self.assertTrue(config.is_file())
-        self.assertEqual(tomllib.loads(config.read_text()), {})
-        self.assertNotIn(".codex/config.toml", read_json(self.root, ".sdd/manifest.json")["files"])
+    def test_both_native_integrations_are_explicit_only(self):
+        initialize(self.root)
+        codex = (self.root / ".agents/skills/sdd/agents/openai.yaml").read_text()
+        claude = (self.root / ".claude/skills/sdd/SKILL.md").read_text()
+        self.assertIn("allow_implicit_invocation: false", codex)
+        self.assertIn("disable-model-invocation: true", claude.split("---")[1])
+        original = bundle()["skill/SKILL.md"].decode()
+        self.assertEqual((self.root / ".agents/skills/sdd/SKILL.md").read_text(), original)
+        self.assertEqual(claude.replace("disable-model-invocation: true\n", "", 1), original)
 
-    def test_codex_config_owned_by_consumer_survives_init_and_update(self):
-        original = b'# Minha configuracao\r\nmodel = "modelo-do-consumidor"\r\n'
-        (self.root / ".codex").mkdir()
-        (self.root / ".codex/config.toml").write_bytes(original)
-        initialize(self.root, agent="codex")
+    def test_repeated_init_does_not_modify_existing_installation(self):
+        initialize(self.root)
+        self.put("docs/padroes/PRD.md", "Modelo ajustado localmente.\n")
+        before = self.snapshot()
+        result = initialize(self.root)
+        self.assertTrue(result["already_initialized"])
+        self.assertEqual(result["changed"], [])
+        self.assertEqual(self.snapshot(), before)
+
+    def test_existing_business_files_and_configuration_are_untouched(self):
+        original = {
+            "README.md": "# Produto existente\n", "src/app.py": "raise RuntimeError('nao executar')\n",
+            "docs/PRD.md": "# Negocio importante\n", ".codex/config.toml": '# Minha configuracao\ncustom = true\n',
+        }
+        for name, text in original.items():
+            self.put(name, text)
+        initialize(self.root)
         update(self.root)
-        self.assertEqual((self.root / ".codex/config.toml").read_bytes(), original)
-        self.assertFalse((self.root / ".claude").exists())
+        for name, text in original.items():
+            self.assertEqual((self.root / name).read_bytes(), text.encode())
 
-    def test_claude_only_does_not_create_codex_configuration(self):
-        initialize(self.root, agent="claude")
-        self.assertTrue((self.root / ".claude/skills/sdd/SKILL.md").is_file())
-        self.assertFalse((self.root / ".codex").exists())
+    def test_update_replaces_resources_and_preserves_project_bytes(self):
+        self.put("AGENTS.md", "# Instrucoes proprias\r\nNao publicar.\r\n")
+        initialize(self.root)
+        path = self.root / GOVERNOR
+        with path.open("ab") as output:
+            output.write(b"\r\nPlano proprio: migrar conteudo e aguardar decisao X.\r\n")
+        before = path.read_bytes()
+        old_block = managed_section(before.decode(), GOV_START, GOV_END).encode()
+        old_agent = (self.root / "AGENTS.md").read_bytes()
+        result = update(self.root, self.release())
+        after = path.read_bytes()
+        new_block = managed_section(after.decode(), GOV_START, GOV_END).encode()
+        self.assertNotEqual(old_block, new_block)
+        self.assertEqual(before.replace(old_block, b"", 1), after.replace(new_block, b"", 1))
+        self.assertEqual((self.root / "AGENTS.md").read_bytes(), old_agent)
+        self.assertEqual(result["version"], json.loads((self.base / "release/bundle.json").read_text())["version"])
+        self.assertFalse(result["governor_executed"])
+        manifest = read_json(self.root, MANIFEST)
+        for name, expected in manifest["files"].items():
+            self.assertEqual(digest((self.root / name).read_bytes()), expected)
 
-    def test_update_prepares_missing_codex_config_in_existing_installation(self):
-        initialize(self.root, agent="codex")
-        (self.root / ".codex/config.toml").unlink()
-        self.assertIn("codex_config_missing", {i["code"] for i in self.errors()})
-        self.assertIn(".codex/config.toml", update(self.root)["changed"])
-        self.assertEqual(self.errors(), [])
+    def test_update_with_same_distribution_is_idempotent(self):
+        initialize(self.root)
+        before = self.snapshot()
+        result = update(self.root)
+        self.assertEqual(result["changed"], [])
+        self.assertEqual(result["removed"], [])
+        self.assertEqual(self.snapshot(), before)
 
-    def test_invalid_codex_toml_is_reported_and_preserved(self):
-        initialize(self.root, agent="codex")
-        config = self.root / ".codex/config.toml"
-        config.write_text("model = [")
-        update(self.root)
-        self.assertEqual(config.read_text(), "model = [")
-        self.assertIn("codex_config_invalid", {i["code"] for i in self.errors()})
+    def test_prd_instruction_change_is_identified_without_touching_business_prd(self):
+        initialize(self.root)
+        self.put("docs/PRD.md", "Contrato do produto aprovado pelo usuario.\n")
+        source = self.release(change=False)
+        path = source / GOVERNOR
+        path.write_text(path.read_text().replace("Definir o contrato do produto:", "Definir o contrato do produto revisado:", 1))
+        result = update(self.root, source)
+        self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
+        detail = result["governor_changes"][0]["details"][0]
+        self.assertIn("-Definir o contrato", detail["diff"])
+        self.assertIn("+Definir o contrato do produto revisado", detail["diff"])
+        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Contrato do produto aprovado pelo usuario.\n")
+        self.assertFalse(result["governor_executed"])
+        record = read_json(self.root, EXECUTION)["items"]["prd"]["pending"]
+        self.assertIsNone(log_section((self.root / GOVERNOR).read_text()))
+        self.assertIn(detail["diff"], [d["diff"] for d in record["details"]])
+        self.assertEqual(update(self.root, source)["governor_changes"], [])
 
-    def test_read_only_codex_directory_fails_preflight_before_resources(self):
-        protected = self.root / ".codex"
-        protected.mkdir()
-        real_access = os.access
+    def test_template_change_identifies_its_item_even_without_governor_edit(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / "templates/PRD.md"
+        path.write_text(path.read_text() + "\nRegra nova do PRD.\n")
+        result = update(self.root, source)
+        self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
+        self.assertEqual(result["governor_changes"][0]["details"][0]["resource"], "docs/padroes/PRD.md")
 
-        def access(path, mode):
-            return False if Path(path) == protected else real_access(path, mode)
+    def test_method_change_identifies_only_the_relevant_fragment(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / "standards/CONTRATOS.md"
+        path.write_text(path.read_text().replace("### PRD\n", "### PRD\nRegra adicional do metodo PRD.\n", 1))
+        result = update(self.root, source)
+        self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
+        self.assertEqual(result["governor_changes"][0]["details"][0]["resource"], "docs/padroes/CONTRATOS.md#prd")
 
-        with patch("sdd_framework.storage.os.access", side_effect=access):
-            with self.assertRaisesRegex(SDDError, r"\.codex/config.toml.*terminal"):
-                initialize(self.root, agent="both")
-        self.assertFalse((self.root / ".sdd/framework").exists())
-        self.assertFalse((self.root / ".sdd/config.json").exists())
-        self.assertFalse((self.root / "AGENTS.md").exists())
+    def test_shared_changes_are_reported_without_invalidating_all_items(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / "standards/CONTRATOS.md"
+        path.write_text(path.read_text().replace("## Escrita e fontes\n", "## Escrita e fontes\nNova orientacao comum.\n", 1))
+        result = update(self.root, source)
+        self.assertEqual([item["id"] for item in result["governor_changes"]], ["geral"])
 
-    def test_existing_instructions_preserved_byte_for_byte(self):
-        before = "# Projeto\n\nRegra própria: não usar rede.\n"
-        self.put("AGENTS.md", before)
-        self.put("CLAUDE.md", "Meu conteúdo.\n")
-        self.put("docs/PRD.md", "Documento legado sem formatação SDD.\n")
-        self.assertEqual(initialize(self.root)["mode"], "existing")
-        self.assertTrue((self.root / "AGENTS.md").read_text().startswith(before))
-        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Documento legado sem formatação SDD.\n")
-        with (self.root / "AGENTS.md").open("a") as output:
-            output.write("\nOutra regra fora do bloco.\n")
-        text = (self.root / "AGENTS.md").read_bytes()
-        update(self.root)
-        self.assertEqual(text, (self.root / "AGENTS.md").read_bytes())
+    def test_version_change_alone_does_not_request_item_reexecution(self):
+        initialize(self.root)
+        before_items = read_json(self.root, EXECUTION)["items"]
+        result = update(self.root, self.release(change=False))
+        self.assertEqual(result["governor_changes"], [])
+        self.assertEqual(read_json(self.root, EXECUTION)["items"], before_items)
 
-    def test_windows_line_endings_outside_block_are_preserved(self):
-        before = b"# Instrucoes\r\n\r\nRegra do consumidor.\r\n"
-        (self.root / "AGENTS.md").write_bytes(before)
-        initialize(self.root, agent="none")
-        self.assertTrue((self.root / "AGENTS.md").read_bytes().startswith(before))
-        current = (self.root / "AGENTS.md").read_bytes()
-        update(self.root)
-        self.assertEqual((self.root / "AGENTS.md").read_bytes(), current)
+    def test_same_version_content_change_is_detected_without_manual_revision(self):
+        initialize(self.root)
+        result = update(self.root, self.release(__version__))
+        self.assertEqual([item["id"] for item in result["governor_changes"]], ["tasks"])
+        self.assertIsNotNone(read_json(self.root, EXECUTION)["items"]["tasks"]["pending"])
 
-    def test_malformed_marker_aborts_before_resources_written(self):
-        self.put("AGENTS.md", START + "\nBloco quebrado")
+    def complete(self, key="prd"):
+        state = read_json(self.root, EXECUTION)
+        item = state["items"][key]
+        item.update(completed=True, applied=copy.deepcopy(item["installed"]),
+                    baseline=None, pending=None, remaining=[], evidence=["docs/PRD.md: criterios atendidos"])
+        self.put(EXECUTION, json_bytes(state).decode())
+
+    def test_multiple_updates_consolidate_against_applied_and_preserve_application(self):
+        initialize(self.root)
+        self.complete()
+        before = read_json(self.root, EXECUTION)["items"]["prd"]["applied"]
+        with (self.root / GOVERNOR).open("ab") as output:
+            output.write(b"\nResultado anterior preservado.\n")
+        source = self.release(change=False)
+        path = source / GOVERNOR
+        original = path.read_text()
+        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato intermediario:", 1))
+        update(self.root, source)
+        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato final:", 1))
+        result = update(self.root, source)
+        item = read_json(self.root, EXECUTION)["items"]["prd"]
+        diff = item["pending"]["details"][0]["diff"]
+        self.assertIn("-Definir o contrato do produto:", diff)
+        self.assertIn("+Definir o contrato final:", diff)
+        self.assertNotIn("intermediario", diff)
+        self.assertEqual(item["applied"], before)
+        self.assertEqual(result["operations"]["prd"], "reexecute")
+        self.assertIn("Resultado anterior preservado.", (self.root / GOVERNOR).read_text())
+        self.assertIsNone(log_section((self.root / GOVERNOR).read_text()))
+        # Conclusao pela IA elimina o delta, sem novo historico.
+        self.complete()
+        result = update(self.root, source)
+        self.assertEqual(result["changed"], [])
+        self.assertEqual(result["operations"]["prd"], "preserve")
+        self.assertIsNone(read_json(self.root, EXECUTION)["items"]["prd"]["pending"])
+
+    def test_reverted_change_clears_pending_without_touching_applied(self):
+        initialize(self.root)
+        self.complete()
+        source = self.release(change=False)
+        path = source / "templates/PRD.md"
+        original = path.read_text()
+        path.write_text(original + "\nMudanca temporaria.\n")
+        update(self.root, source)
+        self.assertIsNotNone(read_json(self.root, EXECUTION)["items"]["prd"]["pending"])
+        path.write_text(original)
+        result = update(self.root, source)
+        self.assertEqual(result["operations"]["prd"], "preserve")
+        self.assertIsNone(read_json(self.root, EXECUTION)["items"]["prd"]["pending"])
+
+    def test_incomplete_execution_keeps_remaining_and_applied_on_update(self):
+        initialize(self.root)
+        self.assertEqual(update(self.root)["operations"]["prd"], "execute")
+        self.complete()
+        state = read_json(self.root, EXECUTION)
+        state["items"]["prd"].update(completed=False, remaining=["Esclarecer requisito RF-001"])
+        self.put(EXECUTION, json_bytes(state).decode())
+        applied = state["items"]["prd"]["applied"]
+        result = update(self.root, self.release())
+        self.assertEqual(result["operations"]["prd"], "execute")
+        item = read_json(self.root, EXECUTION)["items"]["prd"]
+        self.assertEqual(item["remaining"], ["Esclarecer requisito RF-001"])
+        self.assertEqual(item["applied"], applied)
+
+    def test_added_removed_and_reordered_items_use_stable_ids(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / GOVERNOR
+        text = path.read_text()
+        start = text.index("<!-- SDD:ITEM:prd:START -->")
+        end = text.index("<!-- SDD:ITEM:prd:END -->") + len("<!-- SDD:ITEM:prd:END -->")
+        prd = text[start:end]
+        # Remover o item nao remove o documento do produto.
+        self.put("docs/PRD.md", "Negocio preservado\n")
+        path.write_text(text[:start] + text[end:])
+        result = update(self.root, source)
+        change = next(c for c in result["governor_changes"] if c["id"] == "prd")
+        self.assertEqual(change["kind"], "removido")
+        self.assertEqual(result["operations"]["prd"], "assess_removal")
+        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Negocio preservado\n")
+        # Reintroduzir com o mesmo ID continua sendo o mesmo objeto, nao o numero.
+        text = path.read_text().replace("<!-- SDD:GOVERNADOR:END -->", prd + "\n<!-- SDD:GOVERNADOR:END -->")
+        path.write_text(text)
+        result = update(self.root, source)
+        self.assertEqual(next(c for c in result["governor_changes"] if c["id"] == "prd")["kind"], "adicionado")
+        path.write_text(text.replace(prd, "").replace("<!-- SDD:ITEM:specs:START -->", prd + "\n<!-- SDD:ITEM:specs:START -->", 1))
+        result = update(self.root, source)
+        self.assertEqual([c["id"] for c in result["governor_changes"]], ["geral"])
+        self.assertTrue(any(d["resource"] == "ordem dos itens" for d in result["governor_changes"][0]["details"]))
+
+    def test_new_item_after_installation_has_added_delta_and_execute_route(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / GOVERNOR
+        addition = ("<!-- SDD:ITEM:extra:START -->\n## 8. Extra\n"
+                    "Objeto adicional.\n<!-- SDD:ITEM:extra:END -->\n")
+        path.write_text(path.read_text().replace(GOV_END, addition + GOV_END))
+        result = update(self.root, source)
+        item = read_json(self.root, EXECUTION)["items"]["extra"]
+        self.assertEqual(result["operations"]["extra"], "execute")
+        self.assertEqual(item["pending"]["kind"], "adicionado")
+        self.assertIsNone(item["applied"])
+
+    def test_invalid_ids_or_dependency_abort_without_changes(self):
+        initialize(self.root)
+        source = self.release(change=False)
+        path = source / GOVERNOR
+        text = path.read_text()
+        before = self.snapshot()
+        path.write_text(text.replace('"docs/padroes/PRD.md"', '"docs/padroes/inexistente.md"', 1))
+        with self.assertRaises(SDDError):
+            update(self.root, source)
+        self.assertEqual(self.snapshot(), before)
+        path.write_text(text.replace("SDD:ITEM:specs:", "SDD:ITEM:prd:"))
+        with self.assertRaises(SDDError):
+            update(self.root, source)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_missing_or_corrupted_execution_control_is_not_reset(self):
+        initialize(self.root)
+        path = self.root / EXECUTION
+        original = path.read_bytes()
+        for content in (b"{}", b"invalid", None):
+            with self.subTest(content=content):
+                if content is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(content)
+                before = self.snapshot()
+                with self.assertRaises(SDDError):
+                    update(self.root)
+                self.assertEqual(self.snapshot(), before)
+                path.write_bytes(original)
+
+    def test_installed_reference_is_protected_but_ai_fields_are_editable(self):
+        initialize(self.root)
+        self.complete()
+        self.assertEqual(update(self.root)["changed"], [])
+        state = read_json(self.root, EXECUTION)
+        state["items"].pop("prd")
+        self.put(EXECUTION, json_bytes(state).decode())
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_completion_without_evidence_is_rejected(self):
+        initialize(self.root)
+        self.complete()
+        state = read_json(self.root, EXECUTION)
+        state["items"]["prd"]["evidence"] = []
+        self.put(EXECUTION, json_bytes(state).decode())
+        with self.assertRaises(SDDError):
+            update(self.root)
+
+    def old_log(self):
+        # Simula uma instalacao 0.3, antes do controle separado.
+        initialize(self.root)
+        (self.root / EXECUTION).unlink()
+        record = LOG_START + "\n## Alteracoes recebidas\nDiff anterior pendente\n" + LOG_END
+        with (self.root / GOVERNOR).open("a") as output:
+            output.write("\n\n" + record + "\n")
+        manifest = read_json(self.root, MANIFEST)
+        manifest.pop("execution_hash")
+        manifest["updates_hash"] = digest(record.encode())
+        self.put(MANIFEST, json_bytes(manifest).decode())
+        return record
+
+    def test_legacy_execution_states_become_binary_without_losing_criteria(self):
+        initialize(self.root)
+        self.complete()
+        state = read_json(self.root, EXECUTION)
+        state["schema_version"] = 1
+        old_states = ["completed", "pending", "in_progress", "unrecorded", "not_started"]
+        for index, item in enumerate(state["items"].values()):
+            item["status"] = "completed" if item.pop("completed") else old_states[1 + index % 4]
+        state["items"]["tasks"]["remaining"] = ["Criterio de cobertura nao atendido"]
+        self.put(EXECUTION, json_bytes(state).decode())
+        result = update(self.root)
+        actual = read_json(self.root, EXECUTION)
+        self.assertEqual(actual["schema_version"], 2)
+        self.assertTrue(actual["items"]["prd"]["completed"])
+        self.assertEqual(result["operations"]["prd"], "preserve")
+        self.assertFalse(actual["items"]["tasks"]["completed"])
+        self.assertEqual(actual["items"]["tasks"]["remaining"], state["items"]["tasks"]["remaining"])
+        self.assertEqual(actual["items"]["prd"]["evidence"], state["items"]["prd"]["evidence"])
+        self.assertTrue(all("status" not in item for item in actual["items"].values()))
+        self.assertEqual(update(self.root)["changed"], [])
+
+    def test_old_log_migrates_once_without_fabricating_completion(self):
+        record = self.old_log()
+        before = (self.root / GOVERNOR).read_text()
+        result = update(self.root)
+        state = read_json(self.root, EXECUTION)
+        self.assertEqual(state["legacy_pending"], record)
+        self.assertEqual(result["operations"]["prd"], "execute")
+        self.assertIsNone(state["items"]["prd"]["applied"])
+        self.assertEqual((self.root / GOVERNOR).read_text(), before.replace(record, "", 1))
+        self.assertNotIn("updates_hash", read_json(self.root, MANIFEST))
+        self.assertEqual(update(self.root)["changed"], [])
+
+    def test_modified_old_log_aborts_before_migration(self):
+        record = self.old_log()
+        path = self.root / GOVERNOR
+        path.write_text(path.read_text().replace(record, record + " adulterado"))
+        # Modificar o trecho protegido, nao texto proprio depois dele.
+        path.write_text(path.read_text().replace("Diff anterior pendente", "Alterado"))
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_existing_v2_without_item_metadata_gets_precise_migration(self):
+        initialize(self.root)
+        path = self.root / GOVERNOR
+        text = path.read_text()
+        (self.root / EXECUTION).unlink()
+        import re
+        text = re.sub(r"^<!-- SDD:(?:ITEM:.*?|USES:.*?) -->\n?", "", text, flags=re.M)
+        path.write_text(text)
+        manifest = read_json(self.root, MANIFEST)
+        manifest.pop("execution_hash")
+        manifest["blocks"][GOVERNOR] = digest(managed_section(text, GOV_START, GOV_END).encode())
+        self.put(MANIFEST, json_bytes(manifest).decode())
+        source = self.release(change=False)
+        target = source / GOVERNOR
+        target.write_text(target.read_text().replace("Definir o contrato do produto:", "Definir o contrato revisado:", 1))
+        result = update(self.root, source)
+        self.assertEqual([c["id"] for c in result["governor_changes"]], ["prd"])
+
+    def test_conflicting_local_skill_aborts_before_creating_governor(self):
+        self.put(".agents/skills/sdd/SKILL.md", "Skill particular\n")
+        before = self.snapshot()
         with self.assertRaises(SDDError):
             initialize(self.root)
-        self.assertFalse((self.root / ".sdd/config.json").exists())
-        self.assertFalse((self.root / ".sdd/framework").exists())
+        self.assertEqual(self.snapshot(), before)
+        self.assertFalse((self.root / GOVERNOR).exists())
 
-    def test_unowned_skill_is_not_overwritten(self):
-        self.put(".agents/skills/sdd/SKILL.md", "Minha skill")
+    def test_conflicting_standard_or_governor_is_not_overwritten(self):
+        for name in ("docs/padroes/PRD.md", GOVERNOR):
+            with self.subTest(name=name):
+                path = self.put(name, "Documento particular\n")
+                before = self.snapshot()
+                with self.assertRaises(SDDError):
+                    initialize(self.root)
+                self.assertEqual(self.snapshot(), before)
+                path.unlink()
+
+    def test_modified_managed_resources_abort_entire_update(self):
+        initialize(self.root)
+        for name in ("docs/padroes/PRD.md", ".claude/skills/sdd/SKILL.md"):
+            with self.subTest(name=name):
+                path = self.root / name
+                original = path.read_bytes()
+                path.write_bytes(original + b"\nPersonalizacao.\n")
+                before = self.snapshot()
+                with self.assertRaises(SDDError):
+                    update(self.root)
+                self.assertEqual(self.snapshot(), before)
+                path.write_bytes(original)
+
+    def test_modified_instruction_block_is_preserved(self):
+        initialize(self.root)
+        path = self.root / "AGENTS.md"
+        path.write_text(path.read_text().replace("Execute governador.md", "Outra regra"))
+        before = self.snapshot()
         with self.assertRaises(SDDError):
-            initialize(self.root)
-        self.assertEqual((self.root / ".agents/skills/sdd/SKILL.md").read_text(), "Minha skill")
-        self.assertFalse((self.root / "AGENTS.md").exists())
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
 
-    def test_symlink_escape_is_rejected(self):
-        outside = Path(self.directory.name) / "outside"
+    def test_modified_or_missing_governor_does_not_get_recreated(self):
+        initialize(self.root)
+        path = self.root / GOVERNOR
+        original = path.read_bytes()
+        path.write_bytes(original.replace(GOV_START.encode(), b"<!-- Alterado -->"))
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertNotEqual(path.read_bytes(), original)
+        path.unlink()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertFalse(path.exists())
+
+    def test_missing_managed_standard_aborts_without_restoring_silently(self):
+        initialize(self.root)
+        path = self.root / "docs/padroes/PRD.md"
+        path.unlink()
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_malformed_or_duplicate_markers_abort(self):
+        for text in (START, END + START, START + END + START + END):
+            with self.subTest(text=text):
+                self.put("AGENTS.md", text)
+                before = self.snapshot()
+                with self.assertRaises(SDDError):
+                    initialize(self.root)
+                self.assertEqual(self.snapshot(), before)
+
+    def test_downgrade_is_refused_before_mutation(self):
+        initialize(self.root)
+        before = self.snapshot()
+        with self.assertRaisesRegex(SDDError, "Downgrade"):
+            update(self.root, self.release("0.1.0"))
+        self.assertEqual(self.snapshot(), before)
+
+    def test_invalid_or_executable_distribution_is_rejected(self):
+        initialize(self.root)
+        source = self.release()
+        extra = source / "executar.py"
+        extra.write_text("raise RuntimeError('nunca executar')\n")
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root, source)
+        self.assertEqual(self.snapshot(), before)
+        extra.unlink()
+        (source / "templates/PRD.md").unlink()
+        with self.assertRaises(SDDError):
+            update(self.root, source)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_manifest_cannot_claim_a_business_document(self):
+        initialize(self.root)
+        self.put("README.md", "Documento do usuario\n")
+        manifest = read_json(self.root, MANIFEST)
+        manifest["files"]["README.md"] = digest(b"Documento do usuario\n")
+        self.put(MANIFEST, json_bytes(manifest).decode())
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_update_requires_an_existing_installation(self):
+        with self.assertRaisesRegex(SDDError, "init"):
+            update(self.root)
+        self.assertFalse((self.root / GOVERNOR).exists())
+
+    def test_lock_blocks_competing_writer(self):
+        initialize(self.root)
+        path = self.put(".sdd/lock", "Outro processo\n")
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+        path.unlink()
+
+    def test_permission_preflight_prevents_partial_installation(self):
+        with patch("sdd_framework.storage.os.access", return_value=False):
+            with self.assertRaises(SDDError):
+                initialize(self.root)
+        self.assertEqual(self.snapshot(), {})
+
+    def test_legacy_migration_removes_only_managed_resources(self):
+        resources, blocks = self.legacy()
+        self.put(".sdd/framework/pessoal.md", "Arquivo nao administrado\n")
+        self.put("docs/PRD.md", "Conhecimento do negocio\n")
+        original_flow = (self.root / OLD_FLOW).read_bytes()
+        old_block = blocks[OLD_FLOW].encode()
+        before_config = (self.root / ".sdd/config.json").read_bytes()
+        result = update(self.root)
+        self.assertFalse(result["governor_executed"])
+        for name in resources:
+            if name not in (".agents/skills/sdd/SKILL.md", ".claude/skills/sdd/SKILL.md"):
+                self.assertFalse((self.root / name).exists(), name)
+        self.assertEqual((self.root / ".sdd/framework/pessoal.md").read_text(), "Arquivo nao administrado\n")
+        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Conhecimento do negocio\n")
+        after_flow = (self.root / OLD_FLOW).read_bytes()
+        self.assertEqual(original_flow.replace(old_block, b""), after_flow.replace(LEGACY_BLOCK.encode(), b""))
+        self.assertEqual((self.root / ".sdd/config.json").read_bytes(), before_config)
+        self.assertEqual((self.root / ".sdd/adoption/tasks/T-001.md").read_text(), "Ticket concluido anteriormente.\n")
+        self.assertIn("Nao executar o fluxo anterior".casefold(), LEGACY_BLOCK.casefold().replace("não", "nao"))
+        self.assertEqual(read_json(self.root, MANIFEST)["schema_version"], 2)
+        self.assertEqual(update(self.root)["changed"], [])
+
+    def test_legacy_conflict_blocks_migration_and_removals(self):
+        self.legacy()
+        self.put(".sdd/framework/templates/PRD.md", "Template alterado\n")
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+        self.assertFalse((self.root / GOVERNOR).exists())
+
+    def test_legacy_flow_can_be_removed_after_agent_migration(self):
+        self.legacy()
+        update(self.root)
+        (self.root / OLD_FLOW).unlink()
+        update(self.root)
+        self.assertNotIn(OLD_FLOW, read_json(self.root, MANIFEST)["blocks"])
+
+    def test_symlink_in_target_or_distribution_is_refused(self):
+        if not hasattr(os, "symlink"):
+            self.skipTest("Symlinks indisponiveis")
+        outside = self.base / "outside"
         outside.mkdir()
-        (self.root / ".agents").symlink_to(outside, target_is_directory=True)
+        try:
+            (self.root / "docs").symlink_to(outside, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(str(exc))
         with self.assertRaises(SDDError):
             initialize(self.root)
         self.assertEqual(list(outside.iterdir()), [])
-        self.assertFalse((self.root / ".sdd/config.json").exists())
-
-    def test_modified_resource_blocks_update_atomically(self):
-        initialize(self.root)
-        source = self.root / ".sdd/framework/templates/TASK.md"
-        source.write_text("Customização importante")
-        agents = (self.root / "AGENTS.md").read_bytes()
-        manifest = (self.root / ".sdd/manifest.json").read_bytes()
+        (self.root / "docs").unlink()
+        source = self.release()
+        path = source / "templates/PRD.md"
+        path.unlink()
+        path.symlink_to(ROOT / "README.md")
         with self.assertRaises(SDDError):
-            update(self.root)
-        self.assertEqual(source.read_text(), "Customização importante")
-        self.assertEqual((self.root / "AGENTS.md").read_bytes(), agents)
-        self.assertEqual((self.root / ".sdd/manifest.json").read_bytes(), manifest)
+            bundle(source)
 
-    def test_modified_block_is_not_overwritten(self):
-        initialize(self.root)
-        path = self.root / "AGENTS.md"
-        path.write_text(path.read_text().replace("Fluxo SDD", "Meu Fluxo SDD"))
-        with self.assertRaises(SDDError):
-            update(self.root)
-
-    def test_local_release_update_preserves_product_docs(self):
-        initialize(self.root)
-        source = Path(self.directory.name) / "release"
-        for path, content in bundle().items():
-            target = source / path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(content)
-        (source / "bundle.json").write_text(json.dumps({"version": "0.1.1", "schema_version": 1}))
-        (source / "skill/SKILL.md").write_text((source / "skill/SKILL.md").read_text() + "\nAjuste da nova versão.\n")
-        self.put("docs/PRD.md", "Requisitos aprovados pelo usuário.")
-        result = update(self.root, source=source)
-        self.assertEqual(result["version"], "0.1.1")
-        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Requisitos aprovados pelo usuário.")
-        self.assertIn("Ajuste da nova versão", (self.root / ".agents/skills/sdd/SKILL.md").read_text())
-
-    def test_incompatible_bundle_is_rejected(self):
-        initialize(self.root)
-        source = Path(self.directory.name) / "release"
-        source.mkdir()
-        (source / "bundle.json").write_text('{"version":"0.2.0","schema_version":2}')
-        (source / "policy.json").write_text('{}')
-        with self.assertRaises(SDDError):
-            update(self.root, source=source)
-
-    def test_init_does_not_downgrade_newer_installed_resources(self):
-        initialize(self.root)
-        config = read_json(self.root, ".sdd/config.json")
-        config["framework_version"] = "0.1.1"
-        self.put(".sdd/config.json", json_bytes(config).decode())
-        manifest = read_json(self.root, ".sdd/manifest.json")
-        manifest["version"] = "0.1.1"
-        self.put(".sdd/manifest.json", json_bytes(manifest).decode())
-        self.assertEqual(initialize(self.root)["version"], "0.1.1")
-        with self.assertRaises(SDDError):
-            update(self.root)
-
-    def test_remote_update_requires_safe_explicit_reference(self):
-        initialize(self.root)
-        for repository, ref in (("file:///tmp/repo", "main"), ("https://github.com/a/b", None), ("https://user:token@github.com/a/b", "main"), ("https://github.com/a/b", "--upload-pack=bad")):
-            with self.subTest(repository=repository, ref=ref), self.assertRaises(SDDError):
-                update(self.root, repository=repository, ref=ref)
-
-    def test_failed_remote_update_does_not_mutate_project(self):
-        initialize(self.root)
-        before = (self.root / ".sdd/manifest.json").read_bytes()
-        with patch("sdd_framework.project.subprocess.run", side_effect=subprocess.TimeoutExpired("git", 60)):
-            with self.assertRaises(SDDError):
-                update(self.root, repository="https://github.com/example/repository", ref="v0.1.1")
-        self.assertEqual((self.root / ".sdd/manifest.json").read_bytes(), before)
-
-    def test_remote_update_reads_bundle_and_remembers_explicit_source(self):
-        initialize(self.root)
-
-        def checkout(command, **options):
-            self.assertEqual(command[:4], ["git", "-c", "core.hooksPath=/dev/null", "clone"])
-            self.assertEqual(options["timeout"], 60)
-            target = Path(command[-1]) / "src/sdd_framework/assets"
-            for name, content in bundle().items():
-                file = target / name
-                file.parent.mkdir(parents=True, exist_ok=True)
-                file.write_bytes(content)
-            (target / "bundle.json").write_text('{"version":"0.1.1","schema_version":1}')
-            return subprocess.CompletedProcess(command, 0)
-
-        with patch("sdd_framework.project.subprocess.run", side_effect=checkout) as clone:
-            result = update(self.root, repository="https://github.com/example/sdd", ref="v0.1.1")
-            self.assertEqual(result["version"], "0.1.1")
-            self.assertEqual(update(self.root)["source"], "https://github.com/example/sdd")
-            self.assertEqual(clone.call_count, 2)
-
-    def test_complete_consumer_reaches_delivery_gate(self):
-        initialize(self.root)
-        self.project_documents()
-        self.complete_adoption()
-        path = self.feature(status="done")
-        file = self.root / path
-        file.write_text(file.read_text().replace("verification: not_verified", "verification: passed").replace("Ainda não executada.", "Persistência verificada pelo teste de cadastro."))
-        report = inspect(self.root, "delivery")
-        self.assertTrue(report["structural_pass"], report["issues"])
-        self.assertEqual(report["counts"]["done"], 7)
-        self.assertEqual(report["executable"], [])
-
-    def test_missing_docs_gate_next_phase(self):
-        initialize(self.root)
-        missing = {i["path"] for i in self.errors("architecture") if i["code"] == "missing_document"}
-        self.assertEqual(missing, {"README.md", "docs/PRD.md"})
-
-    def test_placeholder_does_not_satisfy_gate(self):
-        initialize(self.root)
-        self.put("docs/PRD.md", bundle()["templates/PRD.md"].decode())
-        codes = {i["code"] for i in self.errors("architecture")}
-        self.assertIn("placeholder", codes)
-        self.assertIn("unaccepted_document", codes)
-
-    def test_existing_document_mapping(self):
-        initialize(self.root)
-        self.project_documents()
-        (self.root / "docs/PRD.md").rename(self.root / "docs/PRODUCT.md")
-        self.config(document_paths={"docs/PRD.md": "docs/PRODUCT.md"})
-        self.assertEqual(self.errors("architecture"), [])
-
-    def test_unsafe_mapping_rejected(self):
-        initialize(self.root)
-        self.config(document_paths={"docs/PRD.md": "../../outside.md"})
-        with self.assertRaises(SDDError):
-            inspect(self.root)
-
-    def test_ready_task_requires_authorization(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature(authorization="pending")
-        report = inspect(self.root, "implementation")
-        self.assertIn("authorization", [i["code"] for i in report["issues"]])
-        self.assertNotIn(path, report["executable"])
-
-    def test_product_task_does_not_execute_before_implementation_gate(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature()
-        self.assertNotIn(path, inspect(self.root)["executable"])
-        self.assertIn(path, inspect(self.root, "implementation")["executable"])
-
-    def test_dependency_cycle_and_missing_reference(self):
-        initialize(self.root)
-        self.project_documents()
-        path = "specs/001-livros/tasks/T-001.md"
-        self.feature(dependencies=[path, "specs/002-outro/tasks/T-001.md"])
-        codes = {i["code"] for i in self.errors("implementation")}
-        self.assertIn("dependency_cycle", codes)
-        self.assertIn("missing_dependency", codes)
-
-    def test_requirement_coverage(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature()
-        ticket = self.root / path
-        ticket.write_text(ticket.read_text().replace('["RF-001"]', '["RF-999"]'))
-        codes = {i["code"] for i in self.errors("implementation")}
-        self.assertIn("unknown_requirement", codes)
-        self.assertIn("uncovered_requirement", codes)
-
-    def test_done_requires_verification_result_and_no_human_pending(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature(status="done", executor="joint")
-        ticket = self.root / path
-        ticket.write_text(ticket.read_text().replace("Nenhuma.", "Usuário precisa conferir visualmente."))
-        codes = {i["code"] for i in self.errors("implementation")}
-        self.assertTrue({"unverified_completion", "missing_result", "pending_human_action"} <= codes)
-
-    def test_human_wait_does_not_hide_independent_task(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature(status="awaiting_user", executor="joint")
-        ticket = self.root / path
-        ticket.write_text(ticket.read_text().replace("Nenhuma.", "Usuário: criar conta; devolver identificador público e confirmar acesso. T-002 depende disso."))
-        independent = self.feature("002-independente")
-        report = inspect(self.root, "implementation")
-        self.assertIn(path, report["awaiting_user"])
-        self.assertIn(independent, report["executable"])
-
-    def test_checkpoint_references_actual_ticket(self):
-        initialize(self.root)
-        template = bundle()["templates/CHECKPOINT.md"].decode()
-        template = render(template, date="2026-11-06").replace("task: none", "task: inexistente.md")
-        self.put("CHECKPOINT.md", template)
-        self.assertIn("checkpoint_task", {i["code"] for i in self.errors()})
-
-    def test_invalid_unrelated_spec_does_not_hide_independent_ready_task(self):
-        initialize(self.root)
-        self.project_documents()
-        ready = self.feature()
-        self.feature("002-futura", status="pending")
-        draft = self.root / "specs/002-futura/SPEC.md"
-        draft.write_text(draft.read_text().replace("status: accepted", "status: draft"))
-        report = inspect(self.root, "implementation")
-        self.assertFalse(report["structural_pass"])
-        self.assertIn(ready, report["executable"])
-
-    def test_ready_task_does_not_depend_on_invalid_done_ticket(self):
-        initialize(self.root)
-        self.project_documents()
-        dependency = self.feature(status="done")
-        ready = self.feature("002-dependente", dependencies=[dependency])
-        report = inspect(self.root, "implementation")
-        self.assertNotIn(ready, report["executable"])
-
-    def test_validation_report_identifies_tested_revision(self):
-        initialize(self.root)
-        self.put("specs/001-livros/validation/relatorio.md", "---\nverification: passed\n---\n# Relatório\n\n## Escopo e revisão\nTicket T-001.\n\n## Verificações\nTestes executados.\n\n## Resultados e limitações\nAmbiente local.\n")
-        self.assertIn("validation_metadata", {i["code"] for i in self.errors()})
-
-    def test_pending_inbox_is_visible_but_not_blocking(self):
-        initialize(self.root)
-        self.put("docs/inbox/ITEM-001.md", "---\nid: ITEM-001\nstatus: pending\ncreated: 2026-11-06\n---\n# Memória\n\n## Informação ou proposta\nAvaliar ferramenta.\n\n## Fontes\nConversa do usuário em 2026-11-06.\n\n## Impacto e discussão\nIntegração opcional.\n\n## Destino ou justificativa\nPendente.\n")
-        report = inspect(self.root)
-        self.assertTrue(report["structural_pass"])
-        self.assertIn("inbox_pending", {i["code"] for i in report["issues"]})
-
-    def test_roadmap_tracks_state_changes_and_preserves_planning(self):
-        initialize(self.root)
-        self.project_documents()
-        ticket = self.feature()
-        roadmap = self.root / "docs/ROADMAP.md"
-        original = roadmap.read_bytes()
-        update_roadmap(self.root, inspect(self.root))
-        self.assertTrue(roadmap.read_bytes().startswith(original))
-        self.assertIn("Pronta", roadmap.read_text())
-        file = self.root / ticket
-        file.write_text(file.read_text().replace("status: ready", "status: awaiting_user").replace("Nenhuma.", "Usuário: conferir o formulário e informar o resultado."))
-        update_roadmap(self.root, inspect(self.root))
-        content = roadmap.read_text()
-        self.assertEqual(content.count(PROGRESS_START), 1)
-        self.assertIn("Aguardando usuário", content)
-        self.assertIn("conferir o formulário", content)
-        self.assertIn("../specs/001-livros/tasks/T-001.md", content)
-
-    def test_roadmap_uses_configured_equivalent_path(self):
-        initialize(self.root)
-        self.project_documents()
-        self.feature()
-        self.put("planning/maps/PROJECT.md", (self.root / "docs/ROADMAP.md").read_text())
-        self.config(document_paths={"docs/ROADMAP.md": "planning/maps/PROJECT.md"})
-        self.assertEqual(update_roadmap(self.root, inspect(self.root)), "planning/maps/PROJECT.md")
-        self.assertIn("../../specs/001-livros/tasks/T-001.md", (self.root / "planning/maps/PROJECT.md").read_text())
-        self.assertNotIn(PROGRESS_START, (self.root / "docs/ROADMAP.md").read_text())
-
-    def test_malformed_progress_markers_preserve_roadmap(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.root / "docs/ROADMAP.md"
-        original = path.read_text() + "\n" + PROGRESS_START
-        path.write_text(original)
-        with self.assertRaises(SDDError):
-            update_roadmap(self.root, inspect(self.root))
-        self.assertEqual(path.read_text(), original)
-
-    def test_cli_progress_includes_remediation_created_in_same_run(self):
-        initialize(self.root)
-        self.project_documents()
-        self.put("README.md", "Conteúdo original sem seções.")
+    def test_cli_outputs_json_and_never_runs_governor(self):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            code = main(["check", str(self.root), "--fix", "--roadmap", "--json"])
-        report = json.loads(output.getvalue())
-        self.assertEqual(code, 1)
-        self.assertTrue(report["remediation_created"])
-        paths = {task["path"] for task in report["tasks"]}
-        self.assertTrue(set(report["remediation_created"]) <= paths)
-        self.assertIn("Acompanhamento das tarefas", (self.root / "docs/ROADMAP.md").read_text())
+            self.assertEqual(main(["init", str(self.root), "--json"]), 0)
+        self.assertFalse(json.loads(output.getvalue())["governor_executed"])
+        error = io.StringIO()
+        empty = self.base / "sem-instalacao"
+        empty.mkdir()
+        with contextlib.redirect_stdout(error):
+            self.assertEqual(main(["update", str(empty), "--json"]), 2)
+        self.assertEqual(json.loads(error.getvalue())["exit_code"], 2)
 
-    def test_remediation_is_deduplicated_and_preserves_documents(self):
-        initialize(self.root)
-        self.put("README.md", "Meu conteúdo original")
-        report = inspect(self.root, "architecture")
-        created = create_remediation(self.root, report)
-        self.assertTrue(created)
-        self.assertEqual(create_remediation(self.root, inspect(self.root, "architecture")), [])
-        self.assertEqual((self.root / "README.md").read_text(), "Meu conteúdo original")
-
-    def test_manifest_cannot_omit_required_resource(self):
-        initialize(self.root)
-        manifest = read_json(self.root, ".sdd/manifest.json")
-        manifest["files"].pop(".agents/skills/sdd/SKILL.md")
-        self.put(".sdd/manifest.json", json_bytes(manifest).decode())
-        self.assertIn("untracked_resource", {i["code"] for i in self.errors()})
-
-    def test_validation_gate_detects_unfinished_tasks(self):
-        initialize(self.root)
-        self.project_documents()
-        self.feature()
-        self.assertIn("unfinished_task", {i["code"] for i in self.errors("validation")})
-
-    def test_design_system_is_reference_only(self):
-        initialize(self.root)
-        self.config(interface=True, design_system={"reference": "design/SYSTEM.md", "version": "1"})
-        self.assertIn("design_system_reference", {i["code"] for i in self.errors()})
-        self.assertFalse((self.root / "design/SYSTEM.md").exists())
-
-    def test_selected_feature_does_not_demand_acceptance_of_other_drafts(self):
-        initialize(self.root)
-        self.project_documents()
-        self.feature()
-        self.feature("002-futura", status="pending", authorization="pending")
-        draft = self.root / "specs/002-futura/SPEC.md"
-        draft.write_text(draft.read_text().replace("status: accepted", "status: draft"))
-        self.assertEqual(self.errors("implementation", "001-livros"), [])
-
-    def test_lock_prevents_competing_writers(self):
-        with project_lock(self.root):
-            with self.assertRaises(SDDError):
-                initialize(self.root)
-        self.assertFalse((self.root / ".sdd/lock").exists())
-
-    def test_atomic_write_rolls_back_previous_changes(self):
-        self.put("first.md", "original")
-        real_replace = os.replace
-        calls = 0
-
-        def fail_second(source, target):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                raise OSError("Falha simulada de escrita")
-            return real_replace(source, target)
-
-        with patch("sdd_framework.storage.os.replace", side_effect=fail_second):
-            with self.assertRaises(SDDError):
-                atomic_apply(self.root, {"first.md": b"changed", "second.md": b"new"})
-        self.assertEqual((self.root / "first.md").read_text(), "original")
-        self.assertFalse((self.root / "second.md").exists())
-
-    def test_cli_json_and_error_codes(self):
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            code = main(["inicie", str(self.root), "--agent", "none", "--json"])
-        self.assertEqual(code, 0)
-        self.assertEqual(json.loads(output.getvalue())["agent"], "none")
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            code = main(["conferencia", str(self.root), "--phase", "implementation", "--json"])
-        self.assertEqual(code, 1)
-        self.assertFalse(json.loads(output.getvalue())["structural_pass"])
-        self.put(".sdd/config.json", "{broken")
-        with contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(["check", str(self.root), "--json"]), 2)
-
-    def test_malformed_metadata_is_reported_without_crash(self):
-        initialize(self.root)
-        self.project_documents()
-        path = self.feature()
-        self.put(path, "---\nid: T-001\nstatus: [\n---\n")
-        self.assertIn("metadata", {i["code"] for i in self.errors("implementation")})
-
-    def test_consumer_docs_work_without_framework_resources(self):
-        initialize(self.root, agent="none")
-        self.project_documents()
-        self.feature()
-        import shutil
-        shutil.rmtree(self.root / ".sdd")
-        self.assertIn("RF-001", (self.root / "specs/001-livros/SPEC.md").read_text())
-        self.assertIn("Cadastrar livro", (self.root / "specs/001-livros/tasks/T-001.md").read_text())
-        self.assertIn("ARCHITECTURE", str(self.root / "docs/ARCHITECTURE.md"))
-
-    def test_consumer_script_updates_without_sdd_from_another_directory(self):
-        initialize(self.root, agent="none")
-        self.project_documents()
-        ticket = self.feature(status="awaiting_user", executor="joint")
-        file = self.root / ticket
-        file.write_text(file.read_text().replace("Nenhuma.", "Usuário: configurar acesso e devolver o resultado."))
-        original = (self.root / "docs/ROADMAP.md").read_bytes()
-        import shutil
-        shutil.rmtree(self.root / ".sdd")
-        script = self.root / "scripts/atualizar_roadmap.py"
-        result = subprocess.run([sys.executable, "-I", str(script)], cwd=self.directory.name, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        content = (self.root / "docs/ROADMAP.md").read_bytes()
-        self.assertTrue(content.startswith(original))
-        self.assertIn("configurar acesso", content.decode())
-        self.assertIn("Aguardando usuário", content.decode())
-        self.assertFalse((self.root / ".sdd").exists())
-
-    def test_consumer_script_customization_survives_framework_update(self):
-        original = "# Ferramenta própria do consumidor\n"
-        self.put("scripts/atualizar_roadmap.py", original)
-        initialize(self.root, agent="none")
-        update(self.root)
-        self.assertEqual((self.root / "scripts/atualizar_roadmap.py").read_text(), original)
-
-    def test_consumer_script_preserves_roadmap_when_ticket_is_invalid(self):
-        initialize(self.root, agent="none")
-        self.project_documents()
-        ticket = self.feature()
-        self.put(ticket, "---\nid: T-001\nstatus: invalid\n---\n")
-        before = (self.root / "docs/ROADMAP.md").read_bytes()
-        result = subprocess.run([sys.executable, "-I", str(self.root / "scripts/atualizar_roadmap.py")], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual((self.root / "docs/ROADMAP.md").read_bytes(), before)
-        self.assertFalse((self.root / "docs/ROADMAP.md.lock").exists())
-
-    def test_consumer_script_respects_local_roadmap_path(self):
-        initialize(self.root, agent="none")
-        self.project_documents()
-        self.feature()
-        self.put("planning/PRODUCT.md", (self.root / "docs/ROADMAP.md").read_text())
-        import shutil
-        shutil.rmtree(self.root / ".sdd")
-        result = subprocess.run([sys.executable, "-I", str(self.root / "scripts/atualizar_roadmap.py"), "--roadmap", "planning/PRODUCT.md"], cwd=self.directory.name, capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(PROGRESS_START, (self.root / "planning/PRODUCT.md").read_text())
-        self.assertNotIn(PROGRESS_START, (self.root / "docs/ROADMAP.md").read_text())
-
-    def test_consumer_script_does_not_follow_symlinked_tickets(self):
-        initialize(self.root, agent="none")
-        self.project_documents()
-        ticket = self.feature()
-        outside = Path(self.directory.name) / "outside.md"
-        outside.write_text((self.root / ticket).read_text())
-        (self.root / ticket).unlink()
-        (self.root / ticket).symlink_to(outside)
-        before = (self.root / "docs/ROADMAP.md").read_bytes()
-        result = subprocess.run([sys.executable, "-I", str(self.root / "scripts/atualizar_roadmap.py")], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual((self.root / "docs/ROADMAP.md").read_bytes(), before)
+    def test_cli_has_no_phase_gate_or_implicit_start_command(self):
+        for args in (["check"], ["inicie"], ["init", "--mode", "new"]):
+            with self.subTest(args=args), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as result:
+                    main(args)
+                self.assertEqual(result.exception.code, 2)
 
 
-class FormatTests(unittest.TestCase):
-    def test_duplicate_and_nested_metadata_rejected(self):
-        for text in ("---\nid: T-001\nid: T-002\n---", "---\ncontext:\n  nested: value\n---", "---\ndependencies: [1]\n---"):
-            with self.assertRaises(SDDError):
-                metadata(text)
+class StorageTests(unittest.TestCase):
+    def test_paths_cannot_escape_or_follow_symlinks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("../fora", "/fora", "a/../fora", "a\\fora", "."):
+                with self.subTest(name=name), self.assertRaises(SDDError):
+                    safe_path(root, name)
 
-    def test_paths_cannot_escape_root(self):
-        for relative in ("../out", "/etc/passwd", "a/../../out", "a\\out", "."):
-            with self.assertRaises(SDDError):
-                safe_path(Path("/tmp"), relative)
+    def test_write_and_delete_rollback_preserves_originals(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "old-a").write_bytes(b"original-a")
+            (root / "old-b").write_bytes(b"original-b")
+            (root / "old-a").chmod(0o600)
+            real_unlink = Path.unlink
+            failed = False
+
+            def unlink(path, *args, **kwargs):
+                nonlocal failed
+                if path == root / "old-b" and not failed:
+                    failed = True
+                    raise PermissionError("Falha simulada")
+                return real_unlink(path, *args, **kwargs)
+
+            with patch.object(Path, "unlink", unlink), self.assertRaises(SDDError):
+                atomic_apply(root, {"new": b"novo"}, removals=("old-a", "old-b"))
+            self.assertEqual((root / "old-a").read_bytes(), b"original-a")
+            self.assertEqual((root / "old-b").read_bytes(), b"original-b")
+            self.assertFalse((root / "new").exists())
+            if os.name != "nt":
+                self.assertEqual((root / "old-a").stat().st_mode & 0o777, 0o600)
+
+    def test_write_failure_rolls_back_files(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "a").write_bytes(b"antigo")
+            real_replace = os.replace
+            failed = False
+
+            def replace(src, dst):
+                nonlocal failed
+                if Path(dst) == root / "b" and not failed:
+                    failed = True
+                    raise OSError("Falha simulada")
+                return real_replace(src, dst)
+
+            with patch("sdd_framework.storage.os.replace", replace), self.assertRaises(SDDError):
+                atomic_apply(root, {"a": b"novo", "b": b"novo"})
+            self.assertEqual((root / "a").read_bytes(), b"antigo")
+            self.assertFalse((root / "b").exists())
 
 
 class ReleaseTests(unittest.TestCase):
-    def test_zipapp_is_self_contained(self):
+    def test_zipapp_installs_and_updates_outside_checkout(self):
         with tempfile.TemporaryDirectory(prefix="sdd-release-") as directory:
             app = Path(directory) / "sdd.pyz"
-            subprocess.run([sys.executable, str(ROOT / "tools/build_release.py"), "--output", str(app)], check=True, capture_output=True)
-            project = Path(directory) / "consumer"
-            subprocess.run([sys.executable, str(app), "init", str(project), "--agent", "both"], cwd=directory, check=True, capture_output=True)
-            result = subprocess.run([sys.executable, str(app), "check", str(project), "--json"], cwd=directory, check=True, capture_output=True, text=True)
-            self.assertTrue(json.loads(result.stdout)["structural_pass"])
+            env = dict(os.environ, PYTHONUTF8="1")
+            options = dict(cwd=directory, capture_output=True, text=True, encoding="utf-8", env=env)
+            subprocess.run([sys.executable, str(ROOT / "tools/build_release.py"), "--output", str(app)], check=True, **options)
+            root = Path(directory) / "projeto com espacos"
+            result = subprocess.run([sys.executable, str(app), "init", str(root), "--json"], check=True, **options)
+            self.assertFalse(json.loads(result.stdout)["governor_executed"])
+            result = subprocess.run([sys.executable, str(app), "update", str(root), "--json"], check=True, **options)
+            self.assertEqual(json.loads(result.stdout)["changed"], [])
+            self.assertTrue((root / "docs/padroes/PRD.md").is_file())
+            self.assertFalse((root / "specs").exists())
 
 
 if __name__ == "__main__":

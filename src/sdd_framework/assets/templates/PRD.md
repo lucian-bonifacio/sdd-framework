@@ -7,11 +7,11 @@ status: draft
 [PREENCHER: problema, público e resultado esperado.]
 
 ## Objetivos e escopo
-[PREENCHER: objetivos verificáveis, escopo e exclusões.]
+[PREENCHER: objetivos, como reconhecer o sucesso, escopo e exclusões; sem inventar metas.]
 
 ## Requisitos
 - RF-001: [PREENCHER: requisito geral observável.]
 - RNF-001: [PREENCHER: restrição mensurável de qualidade.]
 
 ## Restrições e pendências
-[PREENCHER: limitações, hipóteses e decisões ainda necessárias.]
+[PREENCHER: limitações, hipóteses ainda não confirmadas e decisões necessárias; referenciar decisões e fontes existentes, sem duplicá-las.]

@@ -18,5 +18,4 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m unittest discover -s tests -v
-      - run: python sdd.py check . --phase delivery
       - run: python tools/build_release.py

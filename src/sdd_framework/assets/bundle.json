@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
-  "schema_version": 1,
-  "description": "Distribuição local da skill, fluxo, política e templates SDD"
+  "version": "0.4.2",
+  "schema_version": 2,
+  "description": "Governador explícito, padrões documentais e uma skill SDD"
 }

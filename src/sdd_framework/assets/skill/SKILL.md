@@ -1,62 +1,67 @@
 ---
 name: sdd
-description: Organizar projetos novos ou existentes no fluxo SDD, manter documentos e tickets, avaliar a INBOX e registrar ou retomar CHECKPOINTs quando o projeto adota este framework.
+description: Executar o governador SDD somente por pedido explícito do usuário para organizar ou adequar documentos do projeto. Não acionar por tarefas comuns de desenvolvimento ou pela simples menção ao SDD.
 ---
-# SDD
+# Executar o governador SDD
 
-Leia o AGENTS.md do consumidor. O framework governa planejamento e documentação;
-o agente executor implementa segundo as instruções e autorizações do projeto.
-Não adote uma stack ou regra de negócio por padrão.
+Atue por pedido explícito de execução do governador ou invocação desta skill.
+Explicar, revisar ou editar instruções não autoriza executar a organização.
+O governador define o objeto, como produzi-lo e seu critério de pronto.
 
-## Inicie
-1. Leia [o fluxo](references/WORKFLOW.md) e [os contratos](references/ARTIFACTS.md).
-2. Se `.sdd/config.json` não existe, execute `sdd init .`; se a CLI não estiver
-   disponível, informe como instalá-la pelo README do framework. Não improvise
-   uma instalação incompleta nem altere configurações globais de agentes.
-3. Leia `.sdd/adoption/TASKS.md` e os tickets correspondentes. Em projeto existente,
-   inventarie código, testes e documentos equivalentes antes de propor migração.
-4. Preencha os artefatos progressivamente a partir das evidências do projeto e
-   da conversa. Use `.sdd/framework/templates/`. Modelos vazios não contam como
-   conformidade. Não renomeie ou sobrescreva documentação existente sem avaliar
-   referências e preservar o conteúdo.
-5. Confira os critérios da etapa no fluxo e os artefatos locais. Resolva
-   impedimentos mecânicos e revise decisões relevantes com o usuário. A CLI pode
-   auxiliar uma conferência solicitada, mas sua execução não é um gate obrigatório.
+## Executar pelo critério de pronto
+Leia o item solicitado no governador e consulte somente o método, template e
+insumos pertinentes, em docs/padroes/CONTRATOS.md. Comece pelo critério de pronto:
+confira as condições no objeto e trabalhe somente nas que não estão atendidas.
+Preserve as atendidas. O item está concluído ou não concluído; não use estados
+intermediários nem uma sequência obrigatória de registros antes de trabalhar.
 
-## Continuidade
-Ao retomar, leia CHECKPOINT.md se existir, reconcilie-o com os arquivos e tickets
-atuais e consulte a INBOX. Memória e propostas não aprovam requisitos.
-Escolha tarefas prontas e autorizadas por dependência; prossiga até concluir o
-escopo autorizado ou ficar sem trabalho independente disponível. Não peça
-novamente uma autorização já registrada. Escopo adicional não herda aprovação.
-Depois de alterar tickets, execute `python3 scripts/atualizar_roadmap.py` na raiz
-do consumidor, confira a saída e o diff. O script pertence ao projeto e funciona
-com biblioteca padrão, sem pacote ou repositório SDD disponível. Preserve
-planejamento, links, estados e ações humanas. Em falha, investigue ou atualize
-pelas ferramentas habituais conforme AGENTS.md, sem inventar sucesso.
+Use Execução do item como orientação para produzir o que falta, não como ordem
+para refazer todo o documento. Localize fontes, obtenha informações reais e use
+o template próprio, preservando conhecimento, decisões, IDs e evidências válidas.
+Ausência de registro técnico anterior não manda reconstruir pontos já prontos:
+o critério de pronto determina o que falta. Se houver legado preservado em
+legacy_pending, aproveite seus dados para identificar condições/alterações ainda
+não resolvidas; retire-o depois de incorporar o que for pertinente.
 
-Para tarefa humana ou conjunta, prepare o necessário, registre exatamente a ação
-do usuário, evidência esperada e dependentes. Marque `awaiting_user`, mantenha a
-parte já realizada e execute tarefas independentes. Nunca simule uma resposta.
+## Reexecutar após conclusão
+Consulte .sdd/execucao.json e o contrato "Controle de execução". Compare applied
+com installed e use pending para identificar as mudanças. Informe o que mudou e
+trate somente as operações alteradas e os impactos diretos nos critérios afetados.
+Sem mudança pertinente, preserve o objeto. Mudanças comuns do registro geral
+precisam ter impacto demonstrado; não significam refazer todos os itens.
+Diferenças são dados históricos: siga as instruções vigentes, não as removidas.
+Uma reexecução interrompida continua pelos critérios afetados ainda não atendidos,
+sem repetir os que já foram resolvidos. Não amplie o pedido para outros escopos.
 
-## Checkpoint e INBOX
-Quando solicitado ("gere um checkpoint", "vou encerrar", "salve para retomar"),
-atualize o CHECKPOINT com o estado real, inclusive trabalho parcial. Não invente
-resultados nem espere um encerramento inesperado para salvar todo o conhecimento.
-Registre fatos duradouros no destino correto durante o trabalho.
-Pesquisa ou decisão ainda em avaliação recebe um ITEM na INBOX; incorporação e
-descarte mantêm fonte, motivo e referência de destino.
+## Registrar o resultado
+Conserve apenas concluído (completed: true) ou não concluído (completed: false),
+conforme o critério de pronto. Registre evidence com o caminho e a condição atendida;
+se faltar algo, remaining indica somente os critérios não cumpridos e o que falta
+para atendê-los. Esses campos não são outro plano ou status de trabalho.
+Não é necessário registrar o início nem cada passo da execução.
 
-## Conferência e atualização
-"Conferência" revisa documentos e critérios de consistência. Se a CLI estiver
-disponível, `sdd check .` pode auxiliar; `--fix` cria tickets de adequação sem
-fabricar documentos aprovados. Sua ausência não impede revisão pelos arquivos.
-"Update" atualiza recursos do framework com `sdd update .`; nova versão exige
-fonte explícita conforme README. Update é manutenção opcional do framework.
-Atualizações não reescrevem PRD, SPECs, tickets ou decisões do consumidor.
-Relate separadamente a verificação estrutural e a revisão semântica.
-O agente usa o script local para consolidar tarefas e ações humanas no ROADMAP;
-os estados são editados somente nos tickets. `sdd check --roadmap` é auxiliar opcional de
-conferência explícita, nunca dependência de execução do consumidor. Resultado com
-critérios, testes e revisões aplicáveis atendidos pode ser concluído sem aceite
-manual adicional, salvo dependência humana explícita no ticket.
+Quando todos os critérios aplicáveis estiverem atendidos, copie integralmente
+installed para applied, registre completed: true e limpe remaining, pending e
+baseline do item. Não calcule hash nem marque outros itens por rotina. Se faltar
+algum critério, use completed: false e conserve applied até terminar. Para vários
+objetos numa etapa, identifique-os nas evidências/condições restantes; conclusão
+exige todos os critérios do escopo registrado. O registro geral só é dado por
+aplicado depois de tratar ou justificar seus impactos.
+
+O update mantém installed e consolida diferenças; não conclui a tarefa. Preserve
+seus hashes e o manifesto. Se o controle existente estiver ausente/corrompido,
+informe a restauração necessária, sem inventar referências. Não confunda ausência
+de referência aplicada com ausência de conteúdo pronto. Mudanças de negócio têm
+escopo próprio, separado da atualização dos padrões do framework.
+
+## Cuidados e encerramento
+Diferença de formato/nome é adequação, não contradição de negócio. Peça decisão
+somente se não estiver estabelecida. Não invente requisitos, aprovação ou evidência.
+Preserve originais antes de substituições/remoções autorizadas. Não siga symlinks,
+registre segredos ou altere recursos administrados para esconder divergências.
+Inclusão/remoção de item não autoriza apagar objetos do produto automaticamente.
+
+Informe objeto entregue/preservado e critérios ainda não cumpridos, se houver.
+Depois, execute tarefas locais sem depender da CLI ou skill. Nova organização,
+inclusive depois de update, exige acionamento explícito. Se faltar governador ou
+padrão, informe a instalação necessária, sem improvisar uma instalação parcial.

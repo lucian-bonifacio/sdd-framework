@@ -59,15 +59,20 @@ def read_json(root: Path, relative: str) -> dict:
     return value
 
 
-def atomic_apply(root: Path, changes: dict[str, bytes], directories: tuple[str, ...] = ()) -> None:
+def atomic_apply(root: Path, changes: dict[str, bytes], directories: tuple[str, ...] = (), removals: tuple[str, ...] = ()) -> None:
     """Preflight completo e rollback de conteúdo em caso de falha de escrita."""
     previous: dict[str, bytes | None] = {}
-    for relative in changes:
+    modes: dict[str, int] = {}
+    if set(changes) & set(removals):
+        raise SDDError("Arquivo não pode ser escrito e removido na mesma operação")
+    for relative in (*changes, *removals):
         path = safe_path(root, relative)
         if path.exists() and not path.is_file():
             raise SDDError(f"Esperado arquivo: {relative}")
         previous[relative] = path.read_bytes() if path.exists() else None
-        if previous[relative] != changes[relative]:
+        if path.exists():
+            modes[relative] = path.stat().st_mode & 0o777
+        if previous[relative] != changes.get(relative):
             parent = path.parent
             while not parent.exists():
                 parent = parent.parent
@@ -104,6 +109,10 @@ def atomic_apply(root: Path, changes: dict[str, bytes], directories: tuple[str, 
                 continue
             replace(safe_path(root, relative), content)
             written.append(relative)
+        for relative in removals:
+            if previous[relative] is not None:
+                safe_path(root, relative).unlink()
+                written.append(relative)
     except (OSError, SDDError) as exc:
         failures = []
         for relative in reversed(written):
@@ -113,6 +122,7 @@ def atomic_apply(root: Path, changes: dict[str, bytes], directories: tuple[str, 
                     path.unlink()
                 else:
                     replace(path, previous[relative])
+                    path.chmod(modes[relative])
             except OSError as rollback:
                 failures.append(str(rollback))
         suffix = f"; rollback incompleto: {failures}" if failures else ""

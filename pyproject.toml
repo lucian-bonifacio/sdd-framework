@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdd-framework"
-version = "0.1.0"
-description = "Planejamento e governança de projetos para agentes de IA"
+version = "0.4.2"
+description = "Governador SDD com acionamento explícito, padrões e skills para IA"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []

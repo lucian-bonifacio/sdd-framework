@@ -4,7 +4,7 @@ status: draft
 # Arquitetura — {{project}}
 
 ## Contexto técnico
-[PREENCHER: tecnologias e justificativas, apontando ao PRD.]
+[PREENCHER: tecnologias e justificativas, apontando ao PRD; identificar soluções existentes reutilizáveis antes de propor novas.]
 
 ## Componentes e contratos
 [PREENCHER: responsabilidades, dados, integrações e estrutura.]

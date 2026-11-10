@@ -13,4 +13,4 @@ status: draft
 [PREENCHER: escolhas e justificativas; criar ADR para decisões transversais.]
 
 ## Riscos e verificação
-[PREENCHER: riscos, mitigação e evidências de aceitação previstas.]
+[PREENCHER: riscos, mitigação e evidências de aceitação previstas; quando houver migração, incluir preservação, compatibilidade e recuperação em falha.]

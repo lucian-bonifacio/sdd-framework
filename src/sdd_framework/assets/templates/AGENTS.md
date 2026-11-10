@@ -9,7 +9,9 @@
 ## Convenções e restrições
 [PREENCHER: invariantes, limites de autorização, regras operacionais e referência ao Design System quando disponível.]
 
-Preservar o bloco SDD existente e todo conteúdo relevante do projeto ao enriquecer estas seções.
-O agente deve usar as ferramentas locais do consumidor para operações mecânicas:
-após alterar tickets, executar `python3 scripts/atualizar_roadmap.py`, conferir o
-resultado e tratar erros. O script pertence ao projeto e não exige CLI SDD.
+Preserve o bloco administrado de acionamento explícito de governador.md.
+Incorpore instruções compatíveis do projeto e somente processos divergentes
+especificamente autorizados. Referencie docs/padroes/CONTRATOS.md para manutenção
+documental. Atualize comandos e convenções quando o trabalho os afetar.
+Não inicie o governador ao abrir uma sessão ou executar uma tarefa comum.
+Após a organização, direcione o agente à execução independente do projeto.

@@ -1,76 +1,78 @@
 ---
 status: active
-updated: 2026-11-06
+updated: 2026-11-10
 task: none
 ---
-# Checkpoint — pausa após envio ao GitHub
+# Checkpoint — Decisões do governador e continuidade
 
 ## Objetivo e tarefa atual
-Pausa solicitada pelo mantenedor em 2026-11-06. Implementação inicial entregue;
-nenhuma tarefa está em execução. Não iniciar teste no consumidor nem criar tag,
-Release, instalador ou publicação adicional até nova solicitação do mantenedor.
-O ponto atual é compreender e experimentar o fluxo num consumidor, depois de
-avaliar a pendência de CI registrada abaixo.
+Sessão encerrada com versão 0.4.2 aplicada. T-001 e T-003 a T-010 concluídas.
+Próximo trabalho: aplicar a todas as demais seções do governador as decisões
+consolidadas na seção 1. PRD, incluindo seus vínculos com os documentos governados,
+templates, contratos, skill e código pertinente. Esta adequação ainda não foi feita
+integralmente. Não confundir ajustes gerais já distribuídos com a revisão de cada seção.
 
 ## Estado do trabalho
-- CLI Inicie/Update/Conferência, uma skill SDD, treze templates e script local do
-  consumidor implementados. As seis SPECs, quinze tickets de implementação e seis
-  tickets de adoção anteriores estão concluídos; uma nova pendência de CI foi aberta.
-- Scripts mecânicos pertencem ao consumidor e são acionados pelo agente seguindo
-  AGENTS/skill. scripts/atualizar_roadmap.py funciona sem pacote SDD, checkout ou .sdd/.
-- ROADMAP é a visão geral de tarefas/estados/ações humanas; tickets são a fonte.
-  Evidência extensa fica junto à entrega, não em docs/VALIDATION.md global.
-- 58 testes locais passaram anteriormente em Python 3.14.4/Linux. A skill e o
-  pacote portátil foram validados. Não se presume sucesso em agentes reais.
-- Foi criado e enviado o repositório público
-  https://github.com/lucian-bonifacio/sdd-framework. O usuário configurou SSH e
-  informou sucesso do envio; a branch main foi confirmada no commit
-  d22fb7b8bdbd50281a7b7cf413bea977ec6948b6, Implementa versão inicial do SDD Framework.
-- A autenticação SSH do terminal foi confirmada pelo usuário como lucian-bonifacio.
-  O Git local agora é operacional: main, origin via SSH; não repetir a afirmação
-  antiga de que este diretório não tem um repositório Git utilizável.
-- Antes deste checkpoint, git status --short estava vazio. Este pedido altera
-  AGENTS.md, CHECKPOINT.md, o índice/ticket de distribuição e a visão do roadmap.
-  Essas mudanças são locais; não foram commitadas nem enviadas nesta pausa.
+Governador é um mapa de instruções para IA, legível e contestável por humanos.
+Seção Aplicação neste projeto removida do governador local e da fonte distribuída
+por pedido explícito. Não recriar essa seção ou outro relatório dentro do governador.
+Ações/resultados ficam nos tickets, decisões nas ADRs, resumo no ROADMAP e passagem
+aqui. Histórico da reformulação consta dos tickets e ADR-003; cópia temporária da
+seção removida: /tmp/sdd-aplicacao-removida-cv7ye3j1.md.
 
-CI remoto consultado em 2026-11-06, aproximadamente 17:51 no fuso America/Sao_Paulo:
-[execução 42287488501](https://github.com/lucian-bonifacio/sdd-framework/actions/runs/42287488501)
-terminou em failure. Ubuntu e macOS passaram em Python 3.11/3.14. Windows falhou
-nas duas versões no passo de testes. Os logs não foram investigados e a causa
-não foi presumida. Pendência registrada no [ticket T-003](specs/006-distribuicao/tasks/T-003.md).
+Controle de mudanças em .sdd/execucao.json, formato 2: installed/applied guardam
+hash e conteúdo; baseline é limitada à referência anterior quando ainda não há
+applied; completed é booleano; evidence demonstra condições atendidas, remaining
+indica somente critérios ainda não cumpridos e pending é a diferença consolidada.
+Update mantém o padrão instalado; IA registra padrão aplicado somente ao concluir.
+Updates sucessivos não acumulam histórico no governador; reversão limpa o delta.
+execution_hash no manifesto protege installed; não alterar hashes para esconder conflito.
+O log antigo permanece uma única vez em legacy_pending até aproveitamento de dados
+pertinentes; não inventar conclusões nem reconstruir pontos prontos por falta de registro.
+
+48 testes passaram no ajuste binário; depois da remoção da seção, 3 testes
+direcionados passaram (0,482 s): preservação, idempotência e zipapp fora do checkout.
+Pacote dist/sdd.pyz reconstruído. Governador não foi acionado nesta manutenção.
+Sem acesso ao tax, CI remota, publicação ou commit/push.
 
 ## Decisões e pendências
-- Contrato atual no PRD, arquitetura e specs. IDEIA.md é inspiração histórica.
-- Init cria a estrutura; o agente do consumidor preenche os documentos e conduz
-  o fluxo. A continuidade usa instruções e ferramentas locais, sem exigir CLI SDD.
-- Critérios de aceitação, testes e revisões aplicáveis atendidos permitem concluir
-  sem aceite manual adicional. Se houver dependência humana explícita, registrar
-  a execução do usuário e verificar o resultado antes de concluir.
-- AI Memory continua proposta na [INBOX ITEM-001](docs/inbox/ITEM-001.md).
-- Nenhum piloto com agente real nem instalação via pipx foi confirmado. O comando
-  sugerido foi pipx install git+https://github.com/lucian-bonifacio/sdd-framework.git@main.
-  Isso é orientação, não evidência de instalação executada.
-- Não foi criada Release/tag. A versão interna do pacote é 0.1.0; não confundir
-  isso com uma Release publicada. O usuário adiou expressamente essa atividade.
-- Instalador próprio semelhante ao install.sh do AI Memory foi discutido como
-  possibilidade futura, sem aprovação de implementação. Licença segue indefinida.
-- O AGENTS.md já orientava consultar CHECKPOINT.md; agora possui seção explícita
-  de retomada, fora do bloco administrado, incluindo respeito aos adiamentos.
+As decisões abaixo devem orientar TODAS as seções restantes, e não só o PRD:
+
+- Cada seção deve definir objetivo, objeto de saída/caminho, requisitos e insumos pertinentes, padrão próprio, operações específicas e critério de pronto claro, com detalhe proporcional.
+- Só há concluído ou não concluído. O critério de pronto é o ponto de partida: conferir o documento real, executar somente condições não atendidas e preservar as atendidas. Não criar estados intermediários ou registros obrigatórios de início/progresso.
+- O documento produzido demonstra cumprimento; o JSON guarda o resultado e monitora alterações do framework. Arquivo presente, hash, versão ou declaração de conclusão não substituem conteúdo/evidência.
+- Não separar projeto novo/existente. Localizar fontes, aproveitar conteúdo válido, obter informação faltante e produzir pelo template SDD. Formato antigo não substitui o padrão; preservar conhecimento, decisões, IDs, evidências e configurações particulares.
+- Introdução comum define quando agir; Execução de cada item explica como produzir o necessário. Não duplicar regras de reexecução nem ordenar reconstrução integral de condições já atendidas. No PRD, essa ambiguidade foi corrigida explicitamente.
+- Após conclusão, reexecução trata somente alterações do framework e impactos diretos nos critérios afetados; sem alteração pertinente, preservar. Mudança comum não invalida todos os itens. Mudanças de negócio têm escopo próprio.
+- Preservar objeto de saída explícito. No PRD foram removidos tabela/classificação de situações e Resultado a registrar; não reintroduzir redundâncias nas outras seções. Pendência/conclusão decorrem do critério de pronto.
+- Usar exclusivamente templates, contratos e skill próprios. Repositórios externos inspiram o desenvolvimento, não são recursos obrigatórios de execução. Skill explica como cumprir o mapa e registrar resultado, sem competir com o governador.
+- Ao adequar cada seção, revisar relações com documentos de entrada/saída, dependências reais e condicionais, templates, método correspondente em CONTRATOS e skill. Atualizar metadados SDD:ITEM/USES se necessário para detectar corretamente mudanças e impactos, sem copiar conteúdo particular para consumidores.
+- Fonte canônica em src/sdd_framework/assets; sincronizar por update. Init/update não executam IA. Executar governador exige pedido explícito; encerramento devolve o projeto à execução independente.
+
+ADR-003 substitui arquitetura operacional antiga; ADR-001/002 são históricas.
+Piloto no tax continua a cargo do mantenedor; T-002/Windows somente após piloto e
+autorização específica. Publicação, licença e integração de memória permanecem adiadas.
 
 ## Próximo passo
-Aguardar o mantenedor retomar. Ao retomar: ler este checkpoint, conferir Git e
-ROADMAP e alinhar se o foco será investigar T-003 do CI ou preparar o piloto.
-O ticket de CI está pending, com authorization: pending, e não foi iniciado.
-Quando o piloto for solicitado, instalar/usar a ferramenta num projeto de teste,
-executar init no terminal antes de abrir o agente e acompanhar o preenchimento
-progressivo. Não publicar Release ou instalar globalmente por iniciativa própria.
+Na próxima tarefa, reler seção 1. PRD, regra geral, contratos e skill; adequar
+seções 2 a 7 (SPECs, arquitetura/design, tasks, ROADMAP, AGENTS/README e encerramento)
+segundo todas as decisões acima, respeitando particularidades de cada objeto.
+Conferir fontes/recursos associados, distribuir por update e verificar os impactos
+reais. Não executar o governador do projeto nem ampliar para tax/Windows por retomada.
+
+Git: o mantenedor autorizou explicitamente um commit local de toda a reformulação
+pendente, até 0.4.2, incluindo exclusões intencionais, novos recursos e este checkpoint.
+Revisão pré-commit: 48 testes passaram (2,852 s), pacote reconstruído, diff conferido
+e padrões usuais de credenciais/symlinks sem ocorrências. dist/ e arquivos .env
+permanecem ignorados. Commit não autoriza push/publicação; próximos commits exigem
+pedido ou autorização vigente, sem rotina automática. Consulte git log/status para
+a confirmação do commit; este checkpoint não tenta registrar seu próprio hash.
+Cópia temporária da arquitetura anterior: /tmp/sdd-anterior-kq0x2nt0.tar.gz;
+o histórico Git preserva a versão anterior ao commit e não depende dessa cópia.
 
 ## Leitura para retomada
-- [AGENTS.md](AGENTS.md)
-- [Roadmap e estados](docs/ROADMAP.md)
-- [Pendência de CI no Windows](specs/006-distribuicao/tasks/T-003.md)
-- [Guia pasta a pasta e arquivo a arquivo](docs/GUIA-DE-FUNCIONAMENTO.md)
-- [README](README.md)
-- [Fluxo e contratos](docs/WORKFLOW.md)
-- [PRD](docs/PRD.md)
-- [Arquitetura](docs/ARCHITECTURE.md)
+[AGENTS](AGENTS.md), [governador](governador.md),
+[contratos](docs/padroes/CONTRATOS.md), [skill](.agents/skills/sdd/SKILL.md),
+[PRD](docs/PRD.md), [SPEC](specs/001-governador/SPEC.md),
+[roadmap](docs/ROADMAP.md), [T-009](specs/001-governador/tasks/T-009.md),
+[T-010](specs/001-governador/tasks/T-010.md) e [ADR-003](docs/decisions/ADR-003.md).

@@ -1,266 +1,120 @@
 # SDD Framework
 
-Framework de planejamento e governança documental para projetos conduzidos com
-agentes de IA. Versão inicial funcional: **0.1.0**. Python **3.11+**, sem
-dependências de execução externas, APIs de IA ou serviços obrigatórios.
-
 ## Objetivo
-Transformar ideias e projetos existentes em trabalho organizado: requisitos,
-arquitetura, roadmap, especificações, tickets, decisões e passagem de contexto.
-O framework instala a skill SDD, templates e instruções; o agente do consumidor
-preenche os documentos e implementa as tarefas autorizadas.
+Organizar projetos com padrões documentais e um procedimento único dirigido à IA:
+[governador.md](governador.md). Versão **0.4.2**, Python 3.11+ e biblioteca padrão.
 
-Três entradas: **Inicie**, **Update** e **Conferência**. O comando init cria um
-plano progressivo de adequação, não documentos de produto vazios nem requisitos
-inventados. Dizer "Inicie" ao agente funciona quando a skill está instalada;
-na primeira utilização, execute a CLI para torná-la disponível no projeto.
-
-## Como este repositório está organizado
-
-Este repositório constrói o SDD Framework e também utiliza seu próprio padrão.
-Por isso, contém tanto os modelos distribuídos quanto documentos preenchidos
-sobre o desenvolvimento do framework:
-
-| Local | Responsabilidade |
-|---|---|
-| `src/sdd_framework/` | Código que implementa a CLI e suas verificações |
-| `src/sdd_framework/assets/` | Fontes dos templates, da skill e das regras distribuídas aos consumidores |
-| `docs/` e `specs/` | Requisitos, arquitetura, decisões e tarefas para construir o próprio SDD Framework |
-| `AGENTS.md` e `CHECKPOINT.md` da raiz | Instruções e passagem de contexto deste projeto |
-| `.sdd/` | Instalação local do framework neste repositório, criada pelo init |
-
-Por exemplo, `src/sdd_framework/assets/templates/PRD.md` é o **modelo**;
-`docs/PRD.md` contém os **requisitos do SDD Framework**. Cada consumidor terá
-seu próprio PRD, preenchido com os requisitos daquele produto.
-
-As tarefas em `specs/*/tasks/` constroem funcionalidades do framework. As tarefas
-em `.sdd/adoption/tasks/` registram a adequação deste repositório ao padrão SDD.
-
-Para mudar o que será distribuído, edite `src/sdd_framework/assets/` e atualize
-o snapshot local com `python3 sdd.py update .`. Para mudar requisitos ou decisões
-deste projeto, edite seus documentos em `docs/` ou `specs/`. A cópia em
-`.sdd/framework/` é administrada pela CLI e não deve ser editada diretamente.
-
-Esta explicação e as instruções específicas do AGENTS.md da raiz pertencem ao
-desenvolvimento do framework; não são copiadas para os projetos consumidores.
+O usuário aciona o governador. Ele orienta criação ou reconstrução de PRD,
+arquitetura, roadmap, SPECs, tarefas e instruções dos agentes. Ao concluir a
+organização, o projeto segue pela execução local, independente do framework.
 
 ## Como começar
-Para obter o projeto pelo GitHub e executar sem instalação global:
+Na raiz do projeto consumidor, instale a distribuição deste checkout:
 
 ```bash
-git clone https://github.com/lucian-bonifacio/sdd-framework.git
-cd sdd-framework
-python3 sdd.py init /caminho/do/projeto
+python3 /caminho/sdd-framework/sdd.py init .
 ```
 
-Sem instalação, a partir deste checkout:
+Depois, abra seu agente e solicite:
+
+> Execute governador.md para organizar este projeto conforme os padrões SDD.
+
+Também é possível invocar explicitamente a skill SDD. Ler o arquivo, iniciar uma
+sessão e executar init/update não acionam o procedimento.
+
+A instalação prepara somente:
+- `governador.md`: instruções para a IA;
+- `docs/padroes/`: contratos e doze templates de documentos;
+- `.agents/skills/sdd/` e `.claude/skills/sdd/`: a mesma skill, com controles nativos de acionamento explícito;
+- `.codex/config.toml`, se ausente; configurações existentes são preservadas;
+- blocos de entrada em AGENTS.md e CLAUDE.md, preservando o conteúdo próprio;
+- `.sdd/manifest.json`: inventário de arquivos e hashes, usado pelo update;
+- `.sdd/execucao.json`: referências instaladas/aplicadas, evidências e pendências por etapa.
+
+Não são criados PRD, SPECs, tickets, código ou diretórios funcionais fictícios.
+O agente cria esses artefatos quando o usuário aciona o governador. Não são
+necessários TASKS.md, controle de fases na CLI ou um atualizador de roadmap.
+
+## Atualização
+Depois de obter a nova distribuição, execute em cada consumidor:
 
 ```bash
-python3 sdd.py init /caminho/do/projeto
-python3 sdd.py check /caminho/do/projeto
+python3 /caminho/sdd-framework/sdd.py update .
 ```
 
-Instalação central em ambiente com pip:
+Para aplicar recursos de outro checkout local compatível:
 
 ```bash
-python3 -m pip install /caminho/para/sdd-framework
-sdd init /caminho/do/projeto
+python3 /caminho/sdd-framework/sdd.py update . --source /caminho/nova-distribuicao
 ```
 
-Ou construa um executável portátil, sem pip:
+Update modifica recursos e trechos administrados, preservando conteúdo próprio
+e os documentos do produto. Não chama a IA nem reabre organização.
+O usuário precisa acionar novamente o governador para avaliar exigências novas.
 
-```bash
-python3 tools/build_release.py
-python3 dist/sdd.pyz init /caminho/do/projeto
-python3 dist/sdd.pyz check /caminho/do/projeto
-```
+O controle fica em `.sdd/execucao.json`, mantendo por etapa o padrão instalado,
+o aplicado e a diferença pendente. O hash identifica mudanças; as referências
+limitadas ao atual/aplicado guardam texto suficiente para explicá-las. Updates
+sucessivos consolidam o delta, sem acumular histórico dentro do governador.
 
-O `.pyz` contém CLI, skill, fluxo e templates. Pode ser copiado para outra máquina
-com Python 3.11+. O pacote ainda não foi publicado em registro público; use uma
-distribuição local ou uma fonte Git explicitamente revisada.
+Quando acionada, a skill parte do critério de pronto: concluído ou não concluído.
+Se faltar alguma condição, trabalha só nela e preserva as atendidas. Depois da
+conclusão, ajusta somente alterações do framework; sem alteração, preserva o objeto. A IA registra conclusão e evidências
+somente após cumprir o critério de pronto. O update não conclui tarefas.
+Mudanças comuns são avaliadas pelo impacto direto; não refazem todos os itens.
 
-Após init, abra Codex ou Claude Code no consumidor e peça **"Inicie"**.
-O agente seguirá AGENTS.md e `.sdd/adoption/TASKS.md`, levantará informações e
-executará o trabalho pronto. As decisões relevantes de produto continuam humanas.
+Na migração de 0.3, o antigo bloco de diferenças sai do governador e é preservado
+uma única vez em legacy_pending no controle técnico. A IA reconcilia esse registro
+no próximo acionamento a partir do critério de pronto, sem refazer condições
+atendidas nem inventar conclusões anteriores. Depois,
+retira esse campo. Registro técnico existente mas perdido/corrompido exige restauração.
 
-### Diretórios nativos dos agentes
+Personalizações em recursos administrados geram conflito antes de qualquer
+escrita. Reconcilie as fontes; não altere hashes para ocultar diferenças. Os
+templates são administrados, mas os documentos preenchidos pertencem ao projeto.
 
-Execute init no terminal **antes de abrir o agente**. Com `--agent both` (padrão),
-a instalação prepara `.codex/config.toml`, `.agents/skills/sdd/` para Codex e
-`.claude/skills/sdd/` para Claude. A seleção de um agente prepara somente sua
-integração; `--agent none` não cria diretórios nativos.
+Na migração de 0.1, os antigos recursos administrados intactos são removidos e
+o procedimento de docs/FLUXO.md é desativado, preservando o plano do consumidor.
+Configuração, tickets e scripts legados permanecem como dados do projeto até
+migração pelo agente explicitamente acionado. Nenhuma regra antiga continua
+sendo exigida pela CLI nova.
 
-O config.toml inicial é um modelo TOML neutro, com orientação em comentários:
-mantém as preferências das demais camadas sem fixar modelo ou permissões. O
-arquivo passa a pertencer ao consumidor: init/update preservam configurações
-existentes, e check aponta ausência ou TOML inválido. Update prepara o modelo
-se o arquivo ainda não existir numa instalação anterior.
+## Padrões e documentos
+O [governador](governador.md) é o único procedimento. Os
+[contratos](docs/padroes/CONTRATOS.md) e templates definem a forma dos documentos;
+a skill orienta como aplicar o procedimento e registrar evidências. O governador escreve instruções para
+a IA, com linguagem clara para revisão e contestação humanas.
+Na execução, são usados exclusivamente os templates, contratos e a skill próprios
+do SDD Framework. Repositórios externos servem somente de inspiração ao desenvolvimento;
+não são consultas, templates alternativos ou procedimentos do consumidor.
 
-O Codex pode proteger `.codex/` e `.agents/` durante sessões `workspace-write`.
-Criar o config antecipadamente não remove essa proteção nem concede confiança
-ao projeto. Init/update devem rodar num terminal com acesso de escrita; falhas
-detectadas no preflight informam o caminho e não instalam recursos parcialmente.
-Veja [configuração](https://learn.chatgpt.com/docs/config-file/config-basic) e
-[pastas protegidas](https://learn.chatgpt.com/docs/agent-approvals-security#protected-paths-in-writable-roots).
+O procedimento começa por PRD e SPECs. Cada artefato tem seu próprio objetivo,
+objeto, templates/skill/referências e operação unificada, com ou sem documentos
+anteriores. A regra de execução/reexecução é única, anterior aos itens, e trata
+somente operações alteradas e impactos diretos. Ações e resultados ficam nos tickets, decisões nas ADRs e passagem no checkpoint;
+estado técnico, evidências e pendências ficam em .sdd/execucao.json.
 
-## Comandos
+Projetos existentes têm conteúdo classificado como aproveitar ou conflito.
+Conhecimento útil migra para os documentos padrão; arquivos de mesma função
+são removidos após preservação e conferência, no escopo autorizado. Divergências
+de processo precisam de decisão explícita. Documentos condicionais não são
+fabricados para preencher modelos.
 
-| Entrada | Exemplos |
-|---|---|
-| Inicie | `sdd init .`, `sdd inicie . --agent codex`, `sdd init . --mode existing` |
-| Update | `sdd update .`, `sdd update . --source /checkout/da/nova-versao` |
-| Conferência | `sdd check .`, `sdd conferencia . --phase implementation --spec 001-login` |
+## Desenvolvimento
+As fontes distribuídas estão em `src/sdd_framework/assets/`; não editar cópias
+instaladas em `docs/padroes/` ou nas integrações para contornar conflitos.
 
-Init instala Codex e Claude por padrão. `--agent claude`, `codex`, `both` ou `none`
-escolhe a integração inicial. Init repetido não reinstala, não troca a integração
-e não altera documentos; para atualizar recursos use update. Não há comando de
-migração de integração nesta versão: escolha os agentes na primeira inicialização.
-`--agent none` permite usar somente documentos ou outros agentes que leiam AGENTS.md.
-
-Use `--json` para automação. `sdd check --fix` cria tickets de adequação deduplicados,
-sem preencher documentos ou aprovar decisões. Não executa código da aplicação.
-
-### Acompanhar o trabalho
-
-O [ROADMAP](docs/ROADMAP.md) é a porta de entrada para entregas, tarefas, estados
-e ações pendentes do usuário. O AGENTS.md e a skill orientam o agente a executar
-o script **do próprio consumidor** após alterar tickets:
-
-```bash
-python3 scripts/atualizar_roadmap.py
-```
-
-Esse arquivo é entregue por init/update e passa a pertencer ao projeto. Usa
-somente biblioteca padrão Python e funciona sem pacote, CLI, configuração .sdd
-ou checkout do framework. Executado de outra pasta, identifica a raiz pela própria
-localização em scripts/. `--roadmap caminho/ROADMAP.md` informa caminho alternativo.
-Quando existe configuração local de equivalências, ela também é respeitada.
-Update preserva scripts locais existentes; novas versões devem ser reconciliadas
-conscientemente pelo consumidor. A fonte distribuída é consumer_roadmap.py.
-
-O agente deve conferir saída/diff e tratar erros. O script altera somente o bloco
-de acompanhamento, preservando prioridades e planejamento. Datas indicam quando
-a visão foi gerada. Estados e resultados são editados nos tickets.
-
-`sdd check --roadmap` continua disponível como auxiliar opcional numa conferência
-expressamente solicitada. Não é dependência da rotina do consumidor. Scripts
-locais atendem operações mecânicas repetíveis; julgamento continua com o agente.
-
-Critérios de aceitação, testes e revisões aplicáveis atendidos permitem concluir
-uma tarefa sem confirmação manual adicional. Ações do usuário são exigidas
-somente quando previstas no ticket; registre sua execução e valide o resultado.
-Evidências ficam nos tickets. Relatórios extensos são opcionais, vinculados à
-tarefa em `specs/NNN-nome/validation/`, sem relatório global de validação.
-
-Etapas aceitas: `discovery`, `requirements`, `architecture`, `planning`,
-`specification`, `design`, `tasks`, `implementation`, `validation`, `delivery`.
-`--phase X` verifica pré-requisitos de entrada; sem opção, usa a etapa da configuração.
-`--spec NNN-nome` limita as exigências de avanço à entrega selecionada; a conferência
-continua apontando documentos presentes malformados nas demais entregas.
-
-Exit codes: **0** sem impedimentos estruturais; **1** pendências de conformidade;
-**2** erro operacional/configuração. Zero não significa testes executados, aceite
-humano obtido ou contrato de comportamento semanticamente validado.
-
-## Atualizações controladas
-`sdd update .` aplica os recursos da CLI instalada ou da fonte remota já configurada.
-Para buscar uma versão explicitamente escolhida em repositório Git HTTPS:
-
-```bash
-sdd update . --repository https://SEU-HOST/SUA-ORG/sdd-framework --ref v0.1.1
-```
-
-Substitua URL e tag por uma distribuição real revisada. Essa forma requer Git e
-rede; não existe um repositório de atualização presumido. A fonte e ref ficam na
-configuração para o próximo update. Prefira tag estável; branches podem mudar.
-O update lê apenas o bundle de dados, sem executar scripts remotos. Verifica
-compatibilidade da política, recusa downgrade e conflitos com recursos editados.
-Mudança de política exige atualizar a CLI, não apenas copiar templates.
-
-Documentos do consumidor, tickets, decisões, INBOX e CHECKPOINT não são
-reescritos. Conteúdo fora dos blocos SDD em AGENTS.md/CLAUDE.md é preservado.
-Depois de atualizar, execute conferência; adequações surgem como tickets.
-
-## Organização dos consumidores
-```text
-AGENTS.md
-README.md
-.codex/config.toml               # quando Codex é selecionado; propriedade do consumidor
-.claude/skills/sdd/              # quando Claude é selecionado
-.agents/skills/sdd/              # skill do Codex
-scripts/atualizar_roadmap.py      # ferramenta autônoma do consumidor
-CHECKPOINT.md                    # quando houver passagem de contexto
-docs/
-  PRD.md
-  ARCHITECTURE.md
-  ROADMAP.md
-  decisions/ADR-NNN.md           # quando necessário
-  inbox/ITEM-NNN.md
-specs/001-funcionalidade/
-  SPEC.md
-  DESIGN.md                     # opcional: design também pode ficar na SPEC
-  TASKS.md                      # índice, não segunda fonte de estados
-  tasks/T-NNN.md
-  validation/                   # evidências extensas, quando necessárias
-.sdd/
-  config.json
-  manifest.json
-  adoption/TASKS.md              # tickets obrigatórios da adequação inicial
-  framework/                    # snapshot versionado de recursos genéricos
-```
-
-O agente cria artefatos quando aplicáveis, seguindo templates e gates. Todo ticket
-tem requisitos, dependências, executor, autorização, verificação e resultado.
-Tarefas autorizadas continuam até conclusão ou bloqueio real; ações do usuário
-são explícitas e não impedem trabalho independente. Não há runtime de agentes.
-
-## Projetos existentes e equivalências
-Init inventaria o modo, mas não migra documentos por heurística. O agente revisa
-conteúdo e referências. `.sdd/config.json` admite `document_paths`, por exemplo:
-
-```json
-{"document_paths": {"docs/PRD.md": "documentation/PRODUCT.md"}}
-```
-
-Esse trecho é parte da configuração, não o arquivo completo. A equivalência
-preserva o caminho existente, mas exige o conteúdo e os metadados do contrato SDD.
-Arquivos fora da raiz ou atravessados por links simbólicos são recusados.
-Em conflitos, preserve o original, compare as versões e reconcilie manualmente;
-não há `--force` destrutivo. Um lock residual deve ser inspecionado antes de removido.
-
-## CHECKPOINT, INBOX e interface
-Peça ao agente "gere um checkpoint para encerrar". CHECKPOINT.md registra estado
-real, alterações parciais, verificações, decisões, bloqueios e próximo passo.
-Ao retomar, o agente confere se essas informações ainda correspondem aos arquivos.
-Informações e propostas ainda não aceitas vão à INBOX; não se tornam requisitos
-por aparecerem numa sessão ou ferramenta de memória.
-
-O SDD não cria Design System. Configure `interface` e, quando disponível,
-`design_system: {"reference": "caminho-ou-URL", "version": "versão"}` no JSON.
-O agente deve aplicar essa referência ao front-end. Ausência fica visível.
-
-## Desenvolvimento e validação
 ```bash
 python3 -m unittest discover -s tests -v
-python3 sdd.py check . --phase delivery
 python3 tools/build_release.py
+python3 sdd.py update .
 ```
 
-CI roda testes em Linux, macOS e Windows, Python 3.11 e 3.14. Resultados locais e
-limites de validação estão em [ticket de distribuição](specs/006-distribuicao/tasks/T-002.md). O ambiente
-original de criação não oferece metadados Git utilizáveis nem pip; por isso o
-artefato portátil é validado sem instalação e nenhum commit é presumido.
+O pacote portátil `dist/sdd.pyz` aceita os mesmos comandos init/update e funciona
+fora deste checkout, sem instalação ou dependências externas de runtime.
+A CLI não executa testes, código ou deploy de consumidores.
 
-## Documentação
-- [Guia detalhado: comandos, pastas e arquivos](docs/GUIA-DE-FUNCIONAMENTO.md)
-- [Requisitos](docs/PRD.md)
-- [Arquitetura](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Fluxo e formatos](docs/WORKFLOW.md)
-- [Decisões](docs/decisions/ADR-001.md)
-- [Referências estudadas](docs/REFERENCES.md)
-- [Checkpoint atual](CHECKPOINT.md)
-
-`IDEIA.md` é a inspiração histórica, preservada; PRD e specs refletem as decisões
-posteriores da conversa. Não publicar pacote ou escolher licença sem definição
-do mantenedor; a entrega local não presume autorização para publicação externa.
+## Contrato do projeto
+- [PRD](docs/PRD.md), [arquitetura](docs/ARCHITECTURE.md) e [roadmap](docs/ROADMAP.md).
+- [SPEC do governador](specs/001-governador/SPEC.md).
+- [Decisão da reformulação](docs/decisions/ADR-003.md) e [referências](docs/REFERENCES.md).
