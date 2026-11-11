@@ -49,7 +49,7 @@ class InstallerTests(unittest.TestCase):
     def release(self, version=None, change=True):
         path = self.base / "release"
         shutil.copytree(ROOT / "src/sdd_framework/assets", path)
-        info = json.loads((path / "bundle.json").read_text())
+        info = json.loads((path / "bundle.json").read_text(encoding="utf-8"))
         major, minor, _ = map(int, __version__.split("."))
         info["version"] = version or f"{major}.{minor + 1}.0"
         (path / "bundle.json").write_bytes(json_bytes(info))
@@ -92,17 +92,17 @@ class InstallerTests(unittest.TestCase):
         for name in ("README.md", "docs/PRD.md", "docs/ROADMAP.md", "docs/FLUXO.md",
                      "specs", "src", "scripts", ".github", ".sdd/adoption", ".sdd/config.json"):
             self.assertFalse((self.root / name).exists(), name)
-        self.assertEqual(managed_section((self.root / "AGENTS.md").read_text()), AGENT_BLOCK)
-        self.assertEqual(managed_section((self.root / "CLAUDE.md").read_text()), CLAUDE_BLOCK)
+        self.assertEqual(managed_section((self.root / "AGENTS.md").read_text(encoding="utf-8")), AGENT_BLOCK)
+        self.assertEqual(managed_section((self.root / "CLAUDE.md").read_text(encoding="utf-8")), CLAUDE_BLOCK)
 
     def test_both_native_integrations_are_explicit_only(self):
         initialize(self.root)
-        codex = (self.root / ".agents/skills/sdd/agents/openai.yaml").read_text()
-        claude = (self.root / ".claude/skills/sdd/SKILL.md").read_text()
+        codex = (self.root / ".agents/skills/sdd/agents/openai.yaml").read_text(encoding="utf-8")
+        claude = (self.root / ".claude/skills/sdd/SKILL.md").read_text(encoding="utf-8")
         self.assertIn("allow_implicit_invocation: false", codex)
         self.assertIn("disable-model-invocation: true", claude.split("---")[1])
-        original = bundle()["skill/SKILL.md"].decode()
-        self.assertEqual((self.root / ".agents/skills/sdd/SKILL.md").read_text(), original)
+        original = bundle()["skill/SKILL.md"].decode().replace("\r\n", "\n")
+        self.assertEqual((self.root / ".agents/skills/sdd/SKILL.md").read_text(encoding="utf-8"), original)
         self.assertEqual(claude.replace("disable-model-invocation: true\n", "", 1), original)
 
     def test_repeated_init_does_not_modify_existing_installation(self):
@@ -141,7 +141,7 @@ class InstallerTests(unittest.TestCase):
         self.assertNotEqual(old_block, new_block)
         self.assertEqual(before.replace(old_block, b"", 1), after.replace(new_block, b"", 1))
         self.assertEqual((self.root / "AGENTS.md").read_bytes(), old_agent)
-        self.assertEqual(result["version"], json.loads((self.base / "release/bundle.json").read_text())["version"])
+        self.assertEqual(result["version"], json.loads((self.base / "release/bundle.json").read_text(encoding="utf-8"))["version"])
         self.assertFalse(result["governor_executed"])
         manifest = read_json(self.root, MANIFEST)
         for name, expected in manifest["files"].items():
@@ -160,16 +160,16 @@ class InstallerTests(unittest.TestCase):
         self.put("docs/PRD.md", "Contrato do produto aprovado pelo usuario.\n")
         source = self.release(change=False)
         path = source / GOVERNOR
-        path.write_text(path.read_text().replace("Definir o contrato do produto:", "Definir o contrato do produto revisado:", 1))
+        path.write_text(path.read_text(encoding="utf-8").replace("Definir o contrato do produto:", "Definir o contrato do produto revisado:", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
         detail = result["governor_changes"][0]["details"][0]
         self.assertIn("-Definir o contrato", detail["diff"])
         self.assertIn("+Definir o contrato do produto revisado", detail["diff"])
-        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Contrato do produto aprovado pelo usuario.\n")
+        self.assertEqual((self.root / "docs/PRD.md").read_text(encoding="utf-8"), "Contrato do produto aprovado pelo usuario.\n")
         self.assertFalse(result["governor_executed"])
         record = read_json(self.root, EXECUTION)["items"]["prd"]["pending"]
-        self.assertIsNone(log_section((self.root / GOVERNOR).read_text()))
+        self.assertIsNone(log_section((self.root / GOVERNOR).read_text(encoding="utf-8")))
         self.assertIn(detail["diff"], [d["diff"] for d in record["details"]])
         self.assertEqual(update(self.root, source)["governor_changes"], [])
 
@@ -177,7 +177,7 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release(change=False)
         path = source / "templates/PRD.md"
-        path.write_text(path.read_text() + "\nRegra nova do PRD.\n")
+        path.write_text(path.read_text(encoding="utf-8") + "\nRegra nova do PRD.\n", encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
         self.assertEqual(result["governor_changes"][0]["details"][0]["resource"], "docs/padroes/PRD.md")
@@ -186,7 +186,7 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release(change=False)
         path = source / "standards/CONTRATOS.md"
-        path.write_text(path.read_text().replace("### PRD\n", "### PRD\nRegra adicional do metodo PRD.\n", 1))
+        path.write_text(path.read_text(encoding="utf-8").replace("### PRD\n", "### PRD\nRegra adicional do metodo PRD.\n", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([item["id"] for item in result["governor_changes"]], ["prd"])
         self.assertEqual(result["governor_changes"][0]["details"][0]["resource"], "docs/padroes/CONTRATOS.md#prd")
@@ -195,7 +195,7 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release(change=False)
         path = source / "standards/CONTRATOS.md"
-        path.write_text(path.read_text().replace("## Escrita e fontes\n", "## Escrita e fontes\nNova orientacao comum.\n", 1))
+        path.write_text(path.read_text(encoding="utf-8").replace("## Escrita e fontes\n", "## Escrita e fontes\nNova orientacao comum.\n", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([item["id"] for item in result["governor_changes"]], ["geral"])
 
@@ -227,10 +227,10 @@ class InstallerTests(unittest.TestCase):
             output.write(b"\nResultado anterior preservado.\n")
         source = self.release(change=False)
         path = source / GOVERNOR
-        original = path.read_text()
-        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato intermediario:", 1))
+        original = path.read_text(encoding="utf-8")
+        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato intermediario:", 1), encoding="utf-8", newline="\n")
         update(self.root, source)
-        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato final:", 1))
+        path.write_text(original.replace("Definir o contrato do produto:", "Definir o contrato final:", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         item = read_json(self.root, EXECUTION)["items"]["prd"]
         diff = item["pending"]["details"][0]["diff"]
@@ -239,8 +239,8 @@ class InstallerTests(unittest.TestCase):
         self.assertNotIn("intermediario", diff)
         self.assertEqual(item["applied"], before)
         self.assertEqual(result["operations"]["prd"], "reexecute")
-        self.assertIn("Resultado anterior preservado.", (self.root / GOVERNOR).read_text())
-        self.assertIsNone(log_section((self.root / GOVERNOR).read_text()))
+        self.assertIn("Resultado anterior preservado.", (self.root / GOVERNOR).read_text(encoding="utf-8"))
+        self.assertIsNone(log_section((self.root / GOVERNOR).read_text(encoding="utf-8")))
         # Conclusao pela IA elimina o delta, sem novo historico.
         self.complete()
         result = update(self.root, source)
@@ -253,11 +253,11 @@ class InstallerTests(unittest.TestCase):
         self.complete()
         source = self.release(change=False)
         path = source / "templates/PRD.md"
-        original = path.read_text()
-        path.write_text(original + "\nMudanca temporaria.\n")
+        original = path.read_text(encoding="utf-8")
+        path.write_text(original + "\nMudanca temporaria.\n", encoding="utf-8", newline="\n")
         update(self.root, source)
         self.assertIsNotNone(read_json(self.root, EXECUTION)["items"]["prd"]["pending"])
-        path.write_text(original)
+        path.write_text(original, encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual(result["operations"]["prd"], "preserve")
         self.assertIsNone(read_json(self.root, EXECUTION)["items"]["prd"]["pending"])
@@ -280,24 +280,24 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release(change=False)
         path = source / GOVERNOR
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         start = text.index("<!-- SDD:ITEM:prd:START -->")
         end = text.index("<!-- SDD:ITEM:prd:END -->") + len("<!-- SDD:ITEM:prd:END -->")
         prd = text[start:end]
         # Remover o item nao remove o documento do produto.
         self.put("docs/PRD.md", "Negocio preservado\n")
-        path.write_text(text[:start] + text[end:])
+        path.write_text(text[:start] + text[end:], encoding="utf-8", newline="\n")
         result = update(self.root, source)
         change = next(c for c in result["governor_changes"] if c["id"] == "prd")
         self.assertEqual(change["kind"], "removido")
         self.assertEqual(result["operations"]["prd"], "assess_removal")
-        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Negocio preservado\n")
+        self.assertEqual((self.root / "docs/PRD.md").read_text(encoding="utf-8"), "Negocio preservado\n")
         # Reintroduzir com o mesmo ID continua sendo o mesmo objeto, nao o numero.
-        text = path.read_text().replace("<!-- SDD:GOVERNADOR:END -->", prd + "\n<!-- SDD:GOVERNADOR:END -->")
-        path.write_text(text)
+        text = path.read_text(encoding="utf-8").replace("<!-- SDD:GOVERNADOR:END -->", prd + "\n<!-- SDD:GOVERNADOR:END -->")
+        path.write_text(text, encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual(next(c for c in result["governor_changes"] if c["id"] == "prd")["kind"], "adicionado")
-        path.write_text(text.replace(prd, "").replace("<!-- SDD:ITEM:specs:START -->", prd + "\n<!-- SDD:ITEM:specs:START -->", 1))
+        path.write_text(text.replace(prd, "").replace("<!-- SDD:ITEM:specs:START -->", prd + "\n<!-- SDD:ITEM:specs:START -->", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([c["id"] for c in result["governor_changes"]], ["geral"])
         self.assertTrue(any(d["resource"] == "ordem dos itens" for d in result["governor_changes"][0]["details"]))
@@ -308,7 +308,7 @@ class InstallerTests(unittest.TestCase):
         path = source / GOVERNOR
         addition = ("<!-- SDD:ITEM:extra:START -->\n## 8. Extra\n"
                     "Objeto adicional.\n<!-- SDD:ITEM:extra:END -->\n")
-        path.write_text(path.read_text().replace(GOV_END, addition + GOV_END))
+        path.write_text(path.read_text(encoding="utf-8").replace(GOV_END, addition + GOV_END), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         item = read_json(self.root, EXECUTION)["items"]["extra"]
         self.assertEqual(result["operations"]["extra"], "execute")
@@ -319,13 +319,13 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release(change=False)
         path = source / GOVERNOR
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         before = self.snapshot()
-        path.write_text(text.replace('"docs/padroes/PRD.md"', '"docs/padroes/inexistente.md"', 1))
+        path.write_text(text.replace('"docs/padroes/PRD.md"', '"docs/padroes/inexistente.md"', 1), encoding="utf-8", newline="\n")
         with self.assertRaises(SDDError):
             update(self.root, source)
         self.assertEqual(self.snapshot(), before)
-        path.write_text(text.replace("SDD:ITEM:specs:", "SDD:ITEM:prd:"))
+        path.write_text(text.replace("SDD:ITEM:specs:", "SDD:ITEM:prd:"), encoding="utf-8", newline="\n")
         with self.assertRaises(SDDError):
             update(self.root, source)
         self.assertEqual(self.snapshot(), before)
@@ -367,13 +367,13 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(SDDError):
             update(self.root)
 
-    def old_log(self):
+    def old_log(self, newline="\n"):
         # Simula uma instalacao 0.3, antes do controle separado.
         initialize(self.root)
         (self.root / EXECUTION).unlink()
-        record = LOG_START + "\n## Alteracoes recebidas\nDiff anterior pendente\n" + LOG_END
-        with (self.root / GOVERNOR).open("a") as output:
-            output.write("\n\n" + record + "\n")
+        record = (LOG_START + "\n## Alteracoes recebidas\nDiff anterior pendente\n" + LOG_END).replace("\n", newline)
+        with (self.root / GOVERNOR).open("ab") as output:
+            output.write((newline * 2 + record + newline).encode("utf-8"))
         manifest = read_json(self.root, MANIFEST)
         manifest.pop("execution_hash")
         manifest["updates_hash"] = digest(record.encode())
@@ -403,22 +403,22 @@ class InstallerTests(unittest.TestCase):
 
     def test_old_log_migrates_once_without_fabricating_completion(self):
         record = self.old_log()
-        before = (self.root / GOVERNOR).read_text()
+        before = (self.root / GOVERNOR).read_text(encoding="utf-8")
         result = update(self.root)
         state = read_json(self.root, EXECUTION)
         self.assertEqual(state["legacy_pending"], record)
         self.assertEqual(result["operations"]["prd"], "execute")
         self.assertIsNone(state["items"]["prd"]["applied"])
-        self.assertEqual((self.root / GOVERNOR).read_text(), before.replace(record, "", 1))
+        self.assertEqual((self.root / GOVERNOR).read_text(encoding="utf-8"), before.replace(record, "", 1))
         self.assertNotIn("updates_hash", read_json(self.root, MANIFEST))
         self.assertEqual(update(self.root)["changed"], [])
 
     def test_modified_old_log_aborts_before_migration(self):
         record = self.old_log()
         path = self.root / GOVERNOR
-        path.write_text(path.read_text().replace(record, record + " adulterado"))
+        path.write_text(path.read_text(encoding="utf-8").replace(record, record + " adulterado"), encoding="utf-8", newline="\n")
         # Modificar o trecho protegido, nao texto proprio depois dele.
-        path.write_text(path.read_text().replace("Diff anterior pendente", "Alterado"))
+        path.write_text(path.read_text(encoding="utf-8").replace("Diff anterior pendente", "Alterado"), encoding="utf-8", newline="\n")
         before = self.snapshot()
         with self.assertRaises(SDDError):
             update(self.root)
@@ -427,18 +427,18 @@ class InstallerTests(unittest.TestCase):
     def test_existing_v2_without_item_metadata_gets_precise_migration(self):
         initialize(self.root)
         path = self.root / GOVERNOR
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         (self.root / EXECUTION).unlink()
         import re
         text = re.sub(r"^<!-- SDD:(?:ITEM:.*?|USES:.*?) -->\n?", "", text, flags=re.M)
-        path.write_text(text)
+        path.write_text(text, encoding="utf-8", newline="\n")
         manifest = read_json(self.root, MANIFEST)
         manifest.pop("execution_hash")
         manifest["blocks"][GOVERNOR] = digest(managed_section(text, GOV_START, GOV_END).encode())
         self.put(MANIFEST, json_bytes(manifest).decode())
         source = self.release(change=False)
         target = source / GOVERNOR
-        target.write_text(target.read_text().replace("Definir o contrato do produto:", "Definir o contrato revisado:", 1))
+        target.write_text(target.read_text(encoding="utf-8").replace("Definir o contrato do produto:", "Definir o contrato revisado:", 1), encoding="utf-8", newline="\n")
         result = update(self.root, source)
         self.assertEqual([c["id"] for c in result["governor_changes"]], ["prd"])
 
@@ -476,7 +476,7 @@ class InstallerTests(unittest.TestCase):
     def test_modified_instruction_block_is_preserved(self):
         initialize(self.root)
         path = self.root / "AGENTS.md"
-        path.write_text(path.read_text().replace("Execute governador.md", "Outra regra"))
+        path.write_text(path.read_text(encoding="utf-8").replace("Execute governador.md", "Outra regra"), encoding="utf-8", newline="\n")
         before = self.snapshot()
         with self.assertRaises(SDDError):
             update(self.root)
@@ -524,7 +524,7 @@ class InstallerTests(unittest.TestCase):
         initialize(self.root)
         source = self.release()
         extra = source / "executar.py"
-        extra.write_text("raise RuntimeError('nunca executar')\n")
+        extra.write_text("raise RuntimeError('nunca executar')\n", encoding="utf-8", newline="\n")
         before = self.snapshot()
         with self.assertRaises(SDDError):
             update(self.root, source)
@@ -578,12 +578,12 @@ class InstallerTests(unittest.TestCase):
         for name in resources:
             if name not in (".agents/skills/sdd/SKILL.md", ".claude/skills/sdd/SKILL.md"):
                 self.assertFalse((self.root / name).exists(), name)
-        self.assertEqual((self.root / ".sdd/framework/pessoal.md").read_text(), "Arquivo nao administrado\n")
-        self.assertEqual((self.root / "docs/PRD.md").read_text(), "Conhecimento do negocio\n")
+        self.assertEqual((self.root / ".sdd/framework/pessoal.md").read_text(encoding="utf-8"), "Arquivo nao administrado\n")
+        self.assertEqual((self.root / "docs/PRD.md").read_text(encoding="utf-8"), "Conhecimento do negocio\n")
         after_flow = (self.root / OLD_FLOW).read_bytes()
         self.assertEqual(original_flow.replace(old_block, b""), after_flow.replace(LEGACY_BLOCK.encode(), b""))
         self.assertEqual((self.root / ".sdd/config.json").read_bytes(), before_config)
-        self.assertEqual((self.root / ".sdd/adoption/tasks/T-001.md").read_text(), "Ticket concluido anteriormente.\n")
+        self.assertEqual((self.root / ".sdd/adoption/tasks/T-001.md").read_text(encoding="utf-8"), "Ticket concluido anteriormente.\n")
         self.assertIn("Nao executar o fluxo anterior".casefold(), LEGACY_BLOCK.casefold().replace("não", "nao"))
         self.assertEqual(read_json(self.root, MANIFEST)["schema_version"], 2)
         self.assertEqual(update(self.root)["changed"], [])
@@ -643,6 +643,28 @@ class InstallerTests(unittest.TestCase):
                     main(args)
                 self.assertEqual(result.exception.code, 2)
 
+
+    def test_crlf_distribution_keeps_explicit_claude_invocation(self):
+        source = self.release(change=False)
+        for path in source.rglob("*"):
+            if path.is_file():
+                path.write_bytes(path.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+        contents = bundle(source)
+        with patch("sdd_framework.project.bundle", return_value=contents):
+            initialize(self.root)
+        claude = (self.root / ".claude/skills/sdd/SKILL.md").read_bytes()
+        self.assertIn(b"name: sdd\r\ndisable-model-invocation: true\r\n", claude)
+        self.assertEqual(claude.replace(b"disable-model-invocation: true\r\n", b"", 1), contents["skill/SKILL.md"])
+        self.assertEqual(update(self.root, source)["changed"], [])
+
+    def test_crlf_legacy_log_preserves_exact_hash_and_content(self):
+        record = self.old_log(newline="\r\n")
+        before = (self.root / GOVERNOR).read_bytes()
+        result = update(self.root)
+        self.assertFalse(result["governor_executed"])
+        self.assertEqual(read_json(self.root, EXECUTION)["legacy_pending"], record)
+        self.assertEqual((self.root / GOVERNOR).read_bytes(), before.replace(record.encode("utf-8"), b"", 1))
+        self.assertEqual(update(self.root)["changed"], [])
 
 class StorageTests(unittest.TestCase):
     def test_paths_cannot_escape_or_follow_symlinks(self):

@@ -145,7 +145,10 @@ def _resources(contents: dict[str, bytes]) -> dict[str, bytes]:
     resources["docs/padroes/CONTRATOS.md"] = contents["standards/CONTRATOS.md"]
     resources[".agents/skills/sdd/SKILL.md"] = contents["skill/SKILL.md"]
     resources[".agents/skills/sdd/agents/openai.yaml"] = contents["skill/agents/openai.yaml"]
-    resources[".claude/skills/sdd/SKILL.md"] = contents["skill/SKILL.md"].replace(b"name: sdd\n", b"name: sdd\ndisable-model-invocation: true\n", 1)
+    skill = contents["skill/SKILL.md"]
+    newline = b"\r\n" if b"\r\n" in skill else b"\n"
+    resources[".claude/skills/sdd/SKILL.md"] = skill.replace(
+        b"name: sdd" + newline, b"name: sdd" + newline + b"disable-model-invocation: true" + newline, 1)
     return resources
 
 
