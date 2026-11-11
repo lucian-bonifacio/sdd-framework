@@ -32,3 +32,18 @@ Na correção 0.2.2, os links externos foram retirados do governador e de sua
 orientação de execução. Os princípios úteis já estão expressos nos templates,
 contratos e na skill próprios. A bibliografia permanece apenas como histórico de
 desenvolvimento, sem papel normativo para o agente ou dependência externa.
+
+## Testes automatizados e política Git — T-020/T-021
+Consultadas em 2026-11-11, como bibliografia de desenvolvimento, não como instruções
+externas obrigatórias para consumidores:
+
+- [Akita — Verification Planning](https://github.com/akitaonrails/my-skills/blob/1aba042a77754408af6ddc887d235345e89642ab/verification-planning/SKILL.md): escolher evidência pela afirmação, risco, observabilidade e repetibilidade; não impor técnica ou verificação duplicada.
+- [Akita — Release Smoke Test](https://github.com/akitaonrails/my-skills/blob/1aba042a77754408af6ddc887d235345e89642ab/release-smoke-test/SKILL.md): verificar o artefato empacotado em ambiente isolado e registrar versão/comando/limites; comandos específicos de OpenCode não foram importados.
+- [Python — unittest](https://docs.python.org/3/library/unittest.html): entradas, preparação, asserções e resultado do executor de testes.
+- [OpenAI — Rules](https://learn.chatgpt.com/docs/agent-configuration/rules): prefix_rule, decisões, camadas confiáveis, precedência e codex execpolicy check. Verificado localmente com codex-cli 0.167.1; não presumir equivalência entre superfícies do produto.
+- [OpenAI — Permissions](https://learn.chatgpt.com/docs/permissions): perfil de filesystem/rede separado de regras por comando e políticas externas.
+
+O template de tarefas do Spec Kit já referenciado acima trata testes como opcionais
+quando solicitados na especificação. Essa regra não foi adotada pelo SDD: a decisão
+de automação/alternativa deriva do comportamento, risco e cobertura existente,
+conforme o contrato próprio, sem importar fases ou outro framework de execução.

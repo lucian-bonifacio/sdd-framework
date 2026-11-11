@@ -18,19 +18,25 @@ GOV_START, GOV_END = "<!-- SDD:GOVERNADOR:START -->", "<!-- SDD:GOVERNADOR:END -
 OLD_FLOW = "docs/FLUXO.md"
 OLD_START, OLD_END = "<!-- SDD:FLOW:START -->", "<!-- SDD:FLOW:END -->"
 MANIFEST = ".sdd/manifest.json"
+GIT_RULES = ".codex/rules/sdd-git.rules"
 TEMPLATES = ("README", "AGENTS", "PRD", "ARCHITECTURE", "ROADMAP", "SPEC", "DESIGN", "TASK", "ADR", "INBOX", "CHECKPOINT", "VALIDATION")
-REQUIRED = {"bundle.json", GOVERNOR_TEMPLATE, "standards/CONTRATOS.md", "skill/SKILL.md", "skill/agents/openai.yaml", "integrations/codex/config.toml"}
+REQUIRED = {"bundle.json", GOVERNOR_TEMPLATE, "standards/CONTRATOS.md", "skill/SKILL.md", "skill/agents/openai.yaml", "integrations/codex/config.toml", "integrations/codex/sdd-git.rules"}
 REQUIRED.update(f"templates/{name}.md" for name in TEMPLATES)
 AGENT_BLOCK = f"""{START}
 Execute docs/governador.md somente quando o usuário solicitar expressamente o
 governador SDD ou invocar a skill SDD. Ler arquivos, abrir uma sessão e executar
-init/update não acionam o governador. Fora dessa execução, trabalhe nas tarefas
-autorizadas do projeto e mantenha seus documentos atualizados.
+init/update não acionam o governador. Quando acionado, siga a sequência e a regra
+de avanço de docs/governador.md#obrigatoriedade-dos-itens.
+Fora dessa execução, trabalhe nas tarefas autorizadas do projeto e mantenha seus
+documentos atualizados. Para autorização de operações Git, aplique
+docs/padroes/CONTRATOS.md#git-e-permissoes.
 {END}"""
 CLAUDE_BLOCK = f"""{START}
 Leia AGENTS.md para as instruções deste projeto. Execute docs/governador.md
 somente por pedido explícito do usuário ou invocação de /sdd. Não iniciar
 organização documental automaticamente ao abrir uma sessão ou receber update.
+Quando acionado, siga a sequência e a regra de avanço de
+docs/governador.md#obrigatoriedade-dos-itens.
 {END}"""
 LEGACY_BLOCK = f"""{OLD_START}
 ## Procedimento anterior desativado
@@ -113,7 +119,7 @@ def integrate(current: str | None, block: str, expected: str | None, start=START
 
 
 def _managed_file(name: str, legacy: bool) -> bool:
-    return (name.startswith("docs/padroes/") or
+    return (name == GIT_RULES or name.startswith("docs/padroes/") or
             name.startswith((".agents/skills/sdd/", ".claude/skills/sdd/")) or
             (legacy and name.startswith(".sdd/framework/")))
 
@@ -145,6 +151,7 @@ def _manifest(root: Path) -> dict | None:
 def _resources(contents: dict[str, bytes]) -> dict[str, bytes]:
     resources = {f"docs/padroes/{name}.md": contents[f"templates/{name}.md"] for name in TEMPLATES}
     resources["docs/padroes/CONTRATOS.md"] = contents["standards/CONTRATOS.md"]
+    resources[GIT_RULES] = contents["integrations/codex/sdd-git.rules"]
     resources[".agents/skills/sdd/SKILL.md"] = contents["skill/SKILL.md"]
     resources[".agents/skills/sdd/agents/openai.yaml"] = contents["skill/agents/openai.yaml"]
     skill = contents["skill/SKILL.md"]

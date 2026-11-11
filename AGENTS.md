@@ -50,6 +50,8 @@ release ou envio das demais mudanças locais. ADR-003 substitui a arquitetura an
 Confira ticket, dependências e Git antes de editar; preserve as mudanças anteriores
 do mantenedor. Vincule o trabalho aos RF/CA da SPEC e mantenha funções de instalação,
 comparação e armazenamento em seus módulos existentes de src/sdd_framework.
+Para testes, aplique docs/padroes/CONTRATOS.md#testes-automatizados e os comandos
+obrigatórios acima.
 Use Python 3.11+ e stdlib, preservando estilos e nomes dos módulos afetados; não
 adicione abstrações, comandos ou refatorações alheios ao ticket. Comente motivos
 que não sejam evidentes no código. Testes permanentes devem verificar comportamento,
@@ -76,6 +78,9 @@ git diff --check antes de entregar; resultado esperado é código 0, sem diagnó
 <!-- SDD:START -->
 Execute docs/governador.md somente quando o usuário solicitar expressamente o
 governador SDD ou invocar a skill SDD. Ler arquivos, abrir uma sessão e executar
-init/update não acionam o governador. Fora dessa execução, trabalhe nas tarefas
-autorizadas do projeto e mantenha seus documentos atualizados.
+init/update não acionam o governador. Quando acionado, siga a sequência e a regra
+de avanço de docs/governador.md#obrigatoriedade-dos-itens.
+Fora dessa execução, trabalhe nas tarefas autorizadas do projeto e mantenha seus
+documentos atualizados. Para autorização de operações Git, aplique
+docs/padroes/CONTRATOS.md#git-e-permissoes.
 <!-- SDD:END -->

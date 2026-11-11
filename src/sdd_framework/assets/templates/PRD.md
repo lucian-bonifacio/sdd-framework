@@ -14,4 +14,4 @@ status: draft
 - RNF-001: [PREENCHER: atributo de qualidade e forma objetiva de verificar a restrição aceita; não inventar limites numéricos sem fonte.]
 
 ## Restrições e pendências
-[PREENCHER: limitações, hipóteses ainda não confirmadas e decisões necessárias; referenciar decisões e fontes existentes, sem duplicá-las.]
+[PREENCHER: limitações, hipóteses e adiamentos com seu alcance; para decisões indispensáveis ao contrato do produto, aplicar o método PRD em docs/padroes/CONTRATOS.md#prd antes de concluir. Referenciar a seção do PRD ou a ADR em docs/decisions/ADR-NNN.md que contém cada decisão, sem duplicá-la.]

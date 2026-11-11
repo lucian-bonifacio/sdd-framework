@@ -21,6 +21,12 @@ preenchimento e marcadores pertencem aos templates; retire-os do documento entre
 Regras permanentes aplicáveis podem ser preservadas, mas precisam das referências
 e parâmetros locais necessários à execução. Ausência ou não aplicabilidade deve
 ser explícita e justificada quando permitida, sem criar documento condicional vazio.
+Antes de acrescentar uma orientação, leia o arquivo e ajuste a regra existente
+que já cobre o assunto; nos demais pontos, referencie sua seção em vez de duplicá-la.
+Ao orientar registros, identifique o arquivo de destino e, para dados estruturados,
+os campos exatos; expressões como "controles existentes" ou "registros pertinentes"
+não substituem essa indicação. A tabela abaixo define as funções documentais;
+os campos técnicos estão em "Controle de execução".
 
 | Documento | Função e padrão |
 |---|---|
@@ -46,7 +52,10 @@ Use YAML simples entre linhas ---: escalares em uma linha e listas de strings
 na notação JSON. Os templates exemplificam o formato; não há parser de fases da CLI.
 
 - Documentos com status: draft, accepted ou superseded. Accepted registra uma
-  decisão real; seções preenchidas não fabricam aprovação.
+  decisão real; seções preenchidas não fabricam aprovação. Esses são metadados
+  editoriais, não condições adicionais de execução: draft não dispensa critérios
+  pendentes e accepted não comprova conclusão. Não crie uma aprovação adicional
+  quando ela não for exigida pelo critério de pronto.
 - Requisitos: RF-NNN/RNF-NNN no PRD e, com escopo local, na SPEC; critérios CA-NNN.
 - SPEC: id igual à pasta NNN-nome; design none (não adotado), inline ou separate.
   Design é o único item opcional e é recomendado; Arquitetura é obrigatória.
@@ -73,14 +82,10 @@ o trabalho; done exige critérios cumpridos, evidência real, passed ou not_appl
 justificado e nenhuma ação humana obrigatória pendente. Cancelar exige motivo e
 não satisfaz uma dependência. Não fabrique aceite, resultado ou autorização.
 
-Antes de executar, confira o plano de verificação do ticket e as regras permanentes
-de AGENTS. Durante a execução, use testes proporcionais à mudança; antes de done,
-cumpra as verificações obrigatórias do projeto e os critérios do ticket. Crie ou
-ajuste testes permanentes quando necessários para demonstrar comportamento ou
-evitar regressões. Resultado anterior só vale enquanto código, entradas e ambiente
-pertinentes forem válidos; amplie ou repita por mudança, falha ou lacuna concreta.
-Teste não aplicável exige justificativa e revisão alternativa; teste obrigatório
-não executado é pendência, não passed ou not_applicable.
+Antes de executar, confira o plano de Verificação do ticket e Comandos e
+verificações de AGENTS.md. Aplique a política "Testes automatizados" abaixo e
+cumpra os critérios do ticket e checks obrigatórios antes de done. Teste
+obrigatório não executado é pendência, não passed ou not_applicable.
 
 Registre no resultado os comandos/procedimentos executados, resultado observado,
 evidência, limitações e limpeza. Remova apenas descartáveis da própria execução
@@ -95,13 +100,14 @@ impedimento, pela menor priority; empate usa caminho completo do ticket. Alterar
 priority pode colocar uma task criada depois na frente das anteriores. Não execute
 blocked/awaiting_user, não interrompa trabalho ativo por rotina e não fabrique
 aprovação, conclusão ou dependência para satisfazer a ordem. Trabalhos independentes
-continuam podendo ser executados no escopo autorizado.
+continuam podendo ser executados no escopo autorizado. Essa seleção rege execução
+de tickets do produto. A organização documental segue a ordem dos itens e a regra
+de avanço de docs/governador.md, não a priority dos tickets.
 
 Em awaiting_user, explique a ação concreta necessária. Em blocked, registre causa
 e desbloqueio. Continue tarefas independentes autorizadas. Ao alterar tickets,
-reflita a fila no ROADMAP, com prioridade, dependências/impedimentos, links, estado,
-executor/verificação e ações humanas;
-não é obrigatório um script ou pacote do framework.
+reflita a fila em docs/ROADMAP.md pelo método ROADMAP abaixo, incluindo posições,
+impedimentos e ações humanas; não é obrigatório um script ou pacote do framework.
 
 A execução não depende de o projeto ser novo ou existente: localizar fontes,
 aproveitar conteúdo útil quando houver e construir o documento pelo template
@@ -109,9 +115,89 @@ próprio. Preserve regras, decisões, IDs e evidências; não invente informaç�
 Reexecução de tarefa já concluída segue somente as operações alteradas e impactos
 diretos. Mudar formato não autoriza alterar o negócio ou apagar conhecimento.
 
+## Testes automatizados
+Um teste automatizado prepara entradas e estado, executa o comportamento e compara
+o resultado observado com uma expectativa explícita por asserções, indicando
+aprovação ou falha sem interpretação humana da saída. Apenas executar um comando,
+imprimir valores ou inspecionar o código não comprova o comportamento.
+
+Na seção Verificação de specs/NNN-nome/tasks/T-NNN.md, vincule os cenários aos
+CA-NNN da SPEC e identifique a cobertura existente. Para comportamento novo ou
+alterado verificável por código e com risco relevante de regressão, preveja criar
+ou ajustar testes automatizados permanentes. Se a cobertura existente já comprova
+a mudança, reutilize-a; não crie teste equivalente. Mudanças mecânicas de baixo
+impacto podem usar os checks existentes. Se automatizar não for adequado ou
+viável, registre o motivo concreto, a limitação e um procedimento alternativo
+reproduzível nessa mesma seção; dificuldade de executar um teste obrigatório
+não o torna dispensável.
+
+Planeje dados, preparação, comando, diretório, pré-requisitos, resultado esperado
+e limpeza conforme o template TASK. Escolha testes unitários, de integração ou
+de ponta a ponta pelo comportamento e pelas fronteiras reais a verificar, sem
+exigir todas as categorias, TDD universal ou percentual de cobertura por rotina.
+Use a infraestrutura do projeto; não invente stack, dependências ou comandos.
+
+Durante a implementação:
+
+- Para defeito reproduzível por automação, execute o teste de regressão antes da
+  correção e confirme falha pelo motivo esperado; depois confirme aprovação.
+  Se isso não for viável, registre a causa e a evidência alternativa no Resultado
+  do ticket, sem afirmar que observou a falha anterior.
+- Verifique resultados observáveis, falhas e limites relevantes, sem copiar a
+  lógica da implementação para calcular o esperado. Testar somente nomes, frases
+  de instruções ou detalhes internos não substitui verificar o comportamento.
+- Controle dados/estado, isole recursos e permita repetir o cenário sem depender
+  da ordem de testes ou de resíduos de execução. Limpe somente descartáveis
+  próprios previstos no ticket; preserve testes permanentes e fixtures úteis.
+- Execute os testes pertinentes à mudança e os checks obrigatórios de AGENTS.md.
+  Resultado anterior só vale enquanto código, entradas, ambiente e estado
+  pertinentes permanecerem válidos; amplie ou repita por falha, mudança ou lacuna.
+- Registre comandos, resultados observados, evidências e limites no Resultado de
+  specs/NNN-nome/tasks/T-NNN.md. Evidência extensa pode ficar em
+  specs/NNN-nome/validation/, vinculada ao ticket pelo template VALIDATION.
+
+A execução do governador exige planejar essas verificações e incorporá-las aos
+tickets e a AGENTS.md; não exige implementar ou executar testes do consumidor
+para concluir a organização documental. AGENTS.md concentra os comandos e gatilhos
+permanentes; os tickets contêm cenários e exceções específicos, sem copiar a política.
+
+## Git e permissões
+Na integração Codex, a política por comando fica em .codex/rules/sdd-git.rules;
+.codex/config.toml define o perfil de permissões, não a matriz de comandos.
+Consultas usuais git status/diff/log/show/rev-parse podem ser feitas no escopo
+pedido sem aprovação adicional do SDD, dentro do sandbox e das regras da sessão.
+O SDD não adiciona allow para executá-las fora do sandbox. Antes de alterar índice,
+árvore de trabalho, histórico, refs, configuração ou sincronizar com remoto, obtenha
+aprovação explícita da operação. A lista de prefixos com prompt está no arquivo
+.rules, incluindo comandos ainda não liberados; não a replique em AGENTS.md.
+Permissão técnica não autoriza commit, publicação ou outra ação fora do pedido.
+
+O Codex carrega rules locais de projetos confiáveis ao iniciar; reinicie a sessão
+após instalar/atualizar a política. As regras são avaliadas por prefixo, com a
+decisão mais restritiva quando várias coincidem. Usar opções globais -C/-c e as
+formas separadas --git-dir/--work-tree/--config-env também exige aprovação nesta
+política. Prefira o diretório de trabalho da ferramenta a envolver Git com -C.
+Aliases, opções com valor unido por =, executáveis por caminho absoluto e scripts
+não analisáveis podem não corresponder a esses prefixos. Não os use para evitar
+aprovação; formas não cobertas devem respeitar a mesma regra de autorização.
+.rules não é um bloqueio universal nem substitui o sandbox, a política de aprovação
+ou restrições administradas do ambiente; o comportamento pode variar por versão
+e superfície do Codex. Claude segue a orientação de autorização de AGENTS.md,
+sem presumir que lê arquivos .rules do Codex.
+
+Init/update administram somente .codex/rules/sdd-git.rules pelo manifesto
+.sdd/manifest.json. Conteúdo local conflitante ou arquivo administrado alterado/
+ausente exige reconciliação, sem sobrescrever; outras rules e config.toml
+particulares são preservados. Não alterar regras globais ou esses hashes para
+silenciar conflitos. A manutenção das fontes e testes da política cabe ao framework,
+não à execução documental no consumidor.
+
 ## Estados dos escopos do governador
-O controle técnico por item fica em .sdd/execucao.json. Decisões e exceções ficam
-nas ADRs; ações e resultados nos tickets, resumo no ROADMAP e passagem no CHECKPOINT.
+O controle técnico por item fica em .sdd/execucao.json, nos campos descritos em
+"Controle de execução". Decisões de produto ficam em docs/PRD.md ou na SPEC
+que as define; decisões transversais e exceções em docs/decisions/ADR-NNN.md;
+ações e resultados em specs/NNN-nome/tasks/T-NNN.md, resumo em docs/ROADMAP.md
+e passagem em CHECKPOINT.md.
 O governador contém somente instruções, sem seção de aplicação do projeto. Não duplicar estados/versões em tabelas
 paralelas. Registre evidências por objeto quando houver várias SPECs ou instruções;
 conclusão parcial não conclui a etapa inteira. Não confundir organização concluída
@@ -126,6 +212,10 @@ Localize fontes do produto, existam ou não documentos anteriores, e construa o 
 pelo padrão incorporando o conteúdo útil. A existência de documento não cria um
 procedimento diferente: aproveite o conteúdo válido sem adotar o formato anterior
 como padrão alternativo.
+As decisões indispensáveis sobre público, uso, escopo ou requisitos precisam
+estar resolvidas em docs/PRD.md; listá-las em "Restrições e pendências" não atende
+ao critério de pronto. Preserve nessa seção restrições e adiamentos que não
+impeçam definir o contrato do produto, identificando seu alcance.
 
 ### SPEC
 Delimite a entrega a partir do PRD e vincule requisitos locais aos requisitos do
@@ -170,7 +260,8 @@ dependências reais e sem ciclos e identifique tarefas executáveis ou impedimen
 Preparação documental não autoriza implementação nem exige tickets concluídos.
 Design ausente não bloqueia preparar tarefas; sua definição suficiente continua
 obrigatória, usando SPEC e arquitetura como insumos.
-Cada ticket referencia AGENTS para regras permanentes e descreve seu plano concreto:
+Cada ticket referencia AGENTS.md e a política "Testes automatizados" para regras
+permanentes e descreve seu plano concreto:
 exigência/cenário, comando ou procedimento, diretório, ambiente/pré-requisitos,
 resultado esperado e evidência. Defina os testes a criar/ajustar quando necessários
 e os momentos de execução. Planeje alvos descartáveis e encerramento de recursos,
@@ -178,20 +269,50 @@ distinguindo testes permanentes e evidências a preservar. Não substitua esse p
 por "executar testes" nem preencha Resultado com sucesso ainda não observado.
 
 #### ROADMAP
-Construa a fila pelo template ROADMAP a partir dos próprios tickets. Prioridade e
-dependências têm fonte única nos metadados dos tickets, em YAML: priority e
-dependencies. Não crie JSON paralelo nem use .sdd/execucao.json para planejar
-execução de produto. Ordene a fila por priority crescente e desempate pelo caminho
-completo, destacando dependências, bloqueios e ações humanas; registre as encerradas
-separadamente, sem reabrir trabalho para ordenar a fila. Links dos tickets identificam
-suas SPECs, sem exigir seção narrativa de entregas ou prioridades/dependências.
+Construa docs/ROADMAP.md pelo template ROADMAP a partir dos tickets em
+specs/NNN-nome/tasks/T-NNN.md. priority e dependencies nos metadados YAML são a
+fonte única de prioridade e dependências. Ordene a fila por priority crescente e,
+em empate, pelo caminho completo do ticket; enumere as linhas em Ordem com 1ª,
+2ª, 3ª… A posição é derivada, não um campo adicional no ticket. Pedido de antecipar
+uma tarefa deve ser refletido em priority dos tickets afetados, preservando a
+ordem relativa das demais, e depois nas posições exibidas; mover só a linha não
+altera a fonte. Não crie JSON paralelo nem use .sdd/execucao.json para planejar
+execução de produto. Não altere prioridade por iniciativa própria.
 
-Retire do ROADMAP o histórico detalhado após preservá-lo nos tickets/decisões
-pertinentes com origem e referências. Resuma somente trabalho, estado, executor,
-verificação e ordem reais. Adiamentos sem task devem apontar sua fonte governada;
-não invente backlog ou autorização. Mantenha ações humanas concretas e vínculos
-com dependentes. Atualize a tabela ao mudar priority, dependencies ou estado de
-ticket; não é obrigatório outro arquivo, índice ou script de sincronização.
+Use as colunas do template. Na fila, explicite dependências e impedimentos; nas
+encerradas, conserve somente tarefa, trabalho, estado e verificação. Não exiba
+valores numéricos de priority nem Executor nas tabelas; executor permanece no
+ticket. Links dos tickets identificam suas SPECs. Não reabra tarefas encerradas
+nem interrompa trabalho ativo para reordenar a fila. Uma tarefa bloqueada conserva
+sua posição desejada; execução segue a elegibilidade definida em "Execução dos
+tickets e manutenção", sem contornar autorização ou dependências.
+
+Traduza apenas a apresentação de status e verification, sem alterar seus valores
+nos tickets. Use o mapeamento:
+
+| Campo do ticket | Valor | Exibição no ROADMAP |
+|---|---|---|
+| status | pending | Pendente |
+| status | ready | Pronta |
+| status | in_progress | Em andamento |
+| status | awaiting_user | Aguardando usuário |
+| status | blocked | Bloqueada |
+| status | done | Concluída |
+| status | cancelled | Cancelada |
+| verification | not_verified | Não verificada |
+| verification | passed | Aprovada |
+| verification | failed | Reprovada |
+| verification | not_applicable | Não aplicável |
+
+Retire do ROADMAP o histórico detalhado após preservá-lo em
+specs/NNN-nome/tasks/T-NNN.md ou docs/decisions/ADR-NNN.md, conforme sua função
+definida em "Estados dos escopos do governador", com origem e referências.
+Mantenha em Ações pendentes do usuário a decisão ou informação necessária,
+link para o ticket ou seção do documento que a define e tarefas impedidas.
+Adiamentos sem task apontam a seção da fonte governada; não invente backlog ou
+autorização. Atualize as tabelas ao mudar priority, dependencies, status ou
+verification de ticket, recalculando posições após inclusão, saída ou reordenação;
+não é obrigatório outro arquivo, índice ou script de sincronização.
 
 ### AGENTS e README
 Construa AGENTS e README pelos templates próprios, aproveitando instruções locais

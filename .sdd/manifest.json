@@ -3,26 +3,27 @@
   "version": "0.4.2",
   "files": {
     "docs/padroes/README.md": "947381291407e82673082f5273814cefeefff5a6ef9bfab907c7d21f7ef06a0f",
-    "docs/padroes/AGENTS.md": "23a7e3b96bf32f260cf059a5f2cc41105f884c648048839a7c6983d545cf27d6",
-    "docs/padroes/PRD.md": "27d25ca47c3d788ea01f3446723870a5a969e99bde0472786cc6439c58dae687",
+    "docs/padroes/AGENTS.md": "61372efa28d5dfb0db076536a42ebd071c32a26a8f0bdc148e9cd70bdb7f55b0",
+    "docs/padroes/PRD.md": "88a84d1e3e4742ad00308577722cefc0c8af1b65435ed1ce23b3ea3601aed8ed",
     "docs/padroes/ARCHITECTURE.md": "5e0bb06be0140f8ff4f9dade5f4991534769874533c74e311c1baea4d1221255",
-    "docs/padroes/ROADMAP.md": "3552e60dd2815e42552e7b5fae653ce1afd9f5d056b2550d9bf84386b5448ed5",
+    "docs/padroes/ROADMAP.md": "47a550e894e41363704364d12b33eb20e49e59060e260957e549f19ec92e00d7",
     "docs/padroes/SPEC.md": "090e3e9a42264edc361e0da4588643afad6e93a26b50567cb9c5f6d7d8b78571",
     "docs/padroes/DESIGN.md": "78015c78d260a2afe8976c3ad8101700d502aa863ef9bcbc789981e73301b2e5",
-    "docs/padroes/TASK.md": "fd114c294458e576d48d6c1c8e3e2a1e7f4f83a6c1a39f584ac896ed06c92420",
+    "docs/padroes/TASK.md": "0162f49ba9d045b2519bd14d17f73e010827cacf156b4ada78f3f3a7b57254d4",
     "docs/padroes/ADR.md": "103297055898bb911fc7484f6023497b32d0c74d77c308f16496dbb819619f6c",
     "docs/padroes/INBOX.md": "d27e190c730bc7fb0eeb4c2707ec65baefe2db560828c97b0cd0cb2ef03eb626",
-    "docs/padroes/CHECKPOINT.md": "d4b18ca18be88687a8448dbe83e26d3ff24589bdaa49a2f4b3d2d153fe47412e",
+    "docs/padroes/CHECKPOINT.md": "c7c8284bd7a4ea04a20798b724c63f605838c97e7eb54ee78d999954612f1d98",
     "docs/padroes/VALIDATION.md": "791685f0d88352498fe8804d49a3472fb2ede4849bed12b5b8f70c102fc9c754",
-    "docs/padroes/CONTRATOS.md": "adfd1fc824d895efc5b319c76eae1632f69d205b8ebae1f6a1fe19e05fc97b1f",
-    ".agents/skills/sdd/SKILL.md": "67a30818fc2e2cb9f08e390caad610c2bbb2154cb06a14eeb901769acccf6d14",
+    "docs/padroes/CONTRATOS.md": "b0843741904e3e7048224f23270a0eb3a5e9e0518897e4cea3a806c47faa38a0",
+    ".codex/rules/sdd-git.rules": "7e5d47268cc144f5619043e4e269f6b61b709ac792cc05451e46cb6ca9bfd24c",
+    ".agents/skills/sdd/SKILL.md": "6c720818cd26293a24c6bf09fa2b6853d6aed74677cc0bde041463c23402916c",
     ".agents/skills/sdd/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
-    ".claude/skills/sdd/SKILL.md": "16d14b2682bda9de7e146e7b7adb8dcf18fe840d5bc1f15845e4a9eb73ad755b"
+    ".claude/skills/sdd/SKILL.md": "f9e5aa02968a00258eb05adeb655973d04c1013600c4c434c4e9b900f82072b5"
   },
   "blocks": {
-    "AGENTS.md": "0da5e0c48abc5897dd486a0e4eea7935cc560b6dbc6781aaa9a7442d8e7fac7b",
-    "CLAUDE.md": "e62a1932f76932c6b5075a07448f30c07cfa639d6314528bec4601695a7700c7",
-    "docs/governador.md": "75eeb2f351e8498ad1f538cd7b2746eb409e34f01143f562b382245da1ecbb52"
+    "AGENTS.md": "b14be93bd91022fbb33c652ee4be0fc385a2dd269e95ee1db0f1c1653174581c",
+    "CLAUDE.md": "f1c6cde810286908d995b81776cbdaf75d5bcd70e386d5733c3afad76617788b",
+    "docs/governador.md": "cd5d62aa5725357411b703956f0cff5990b61f8692d8a9affdee6cf0bdebcb0a"
   },
-  "execution_hash": "fde8bafe7e725c2a3cf466910f98b61e7e660ce08b1bd5e0b4babd1fb773f012"
+  "execution_hash": "0e31ae0b3d9b3e82b4efc99d6edf5ed3445ae79c31640e1b5554d20c5e5f5def"
 }

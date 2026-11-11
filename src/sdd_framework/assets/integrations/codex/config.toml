@@ -2,7 +2,8 @@
 # Carregada pelo Codex somente em projetos confiáveis. Abrir nova sessão após editar.
 # sandbox_mode/--sandbox em outras camadas podem prevalecer sobre este perfil.
 # Políticas administradas e restrições da sessão continuam aplicáveis.
-# Init só cria este arquivo quando ausente; update preserva configurações existentes.
+# Init/update só criam este arquivo quando ausente; configurações existentes são preservadas.
+# Política Git por comando: .codex/rules/sdd-git.rules (projeto confiável; reiniciar Codex).
 
 default_permissions = "project-agents"
 

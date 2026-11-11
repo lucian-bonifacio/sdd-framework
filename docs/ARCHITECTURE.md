@@ -20,7 +20,12 @@ o runtime anterior e substitui a governança de fases pela [ADR-003](decisions/A
 
 A instalação coloca padrões em docs/padroes e a skill em ambas as integrações.
 AGENTS/CLAUDE recebem só blocos de acionamento; seu conteúdo próprio é preservado.
-Configuração Codex existente nunca é substituída.
+Configuração Codex existente nunca é substituída. O recurso
+assets/integrations/codex/sdd-git.rules é instalado em .codex/rules/sdd-git.rules e
+entra no inventário/hash de arquivos administrados. _managed_file permite esse
+caminho exato, sem ampliar o manifesto para outras rules ou config.toml. Conflitos,
+symlinks e rollback usam os mecanismos de instalação existentes. A CLI distribui
+texto; não interpreta regras Starlark nem executa Codex ou Git.
 
 O manifesto .sdd/manifest.json, formato 2, guarda versão e hashes de arquivos/blocos.
 execution_hash protege a projeção installed de .sdd/execucao.json; campos da IA
@@ -66,6 +71,10 @@ A CLI não valida semanticamente comandos nem executa testes ou limpeza no
 consumidor. Update distribui as instruções, preservando documentos particulares;
 a aplicação do conteúdo exige acionamento explícito da IA. Limpeza delimitada
 preserva testes permanentes, fixtures, evidências e arquivos anteriores.
+A definição de testes automatizados e critérios para automação/alternativa ficam
+em docs/padroes/CONTRATOS.md#testes-automatizados, consumidos por Tasks e AGENTS
+via SDD:USES. Os templates remetem a essa política; não há obrigação de testar o
+consumidor para concluir sua organização documental.
 
 ## Localização e migração do governador
 O governador é instalado em docs/governador.md; sua fonte na distribuição continua
@@ -88,11 +97,21 @@ ordinárias, sem prometer transação contra queda de energia.
 O controle nativo de invocação e as instruções impedem acionamento implícito
 conforme o comportamento suportado por cada agente; a CLI não intercepta todas
 as ações livres de uma IA. A qualidade semântica exige execução real e revisão.
+A política Git por prefixo está em .codex/rules/sdd-git.rules; config.toml mantém
+somente o perfil de permissões. Consultas não recebem allow de elevação e mutações
+listadas recebem prompt. Carregamento depende de projeto confiável/reinício e da
+versão/superfície do Codex; precedência e formas não cobertas constam de
+CONTRATOS.md#git-e-permissoes. Essa política não substitui o sandbox ou restrições
+administradas e não é aplicada nativamente pelo Claude.
 
 ## Verificação
 `python3 -m unittest discover -s tests -v` verifica instalação, preservação,
 invocação configurada, conflitos, migração, symlinks, rollback e zipapp fora do
-checkout. `python3 tools/build_release.py` produz o pacote portátil.
+checkout. Quando o binário Codex está disponível, CodexPolicyTests usa
+codex execpolicy check para avaliar tokens sem executar operações Git; sua ausência
+é registrada como skip, sem tornar Codex dependência da CLI. Testes de instalação,
+proteção e distribuição da política continuam stdlib e obrigatórios.
+`python3 tools/build_release.py` produz o pacote portátil.
 A matriz remota e o piloto com agentes reais não são declarados aprovados por
 testes locais. Este produto não tem interface visual nem Design System.
 
@@ -113,7 +132,12 @@ não é recriado silenciosamente. Hash protege consistência acidental, não aut
 conclusões semânticas ou impede toda edição livre da IA.
 
 A regra geral fica no governador, sem repetição por item; a skill explica leitura,
-registro e critérios. Mudança comum exige avaliar impacto direto, sem invalidar
+registro e critérios. Conforme PRD RF-009/RF-011 e SPEC RF-017, a ordem documental
+e o avanço após conclusão são instruções à IA em docs/governador.md, não uma nova
+máquina de estados na CLI. .sdd/execucao.json continua com resultado binário;
+CHECKPOINT.md referencia o item interrompido e items.<id>.remaining desse JSON
+para retomar o pedido. draft/accepted são metadados editoriais, não controles
+adicionais de avanço. Mudança comum exige avaliar impacto direto, sem invalidar
 tudo. Presença de hash/arquivo não comprova critério; não há chamada automática a LLM.
 
 ## Portabilidade de texto — T-002
@@ -130,7 +154,11 @@ Priority e dependencies são metadados YAML dos tickets, fonte única de ordem e
 vínculos. Menor inteiro positivo tem maior prioridade, com padrão 100 e desempate
 pelo caminho completo; IDs/data de criação não definem prioridade. Autorização,
 dependências e impedimentos determinam se a task pode executar, sem interrupção
-por rotina do trabalho ativo. ROADMAP projeta fila e encerradas em tabelas; não há
-JSON paralelo ou armazenamento de backlog em .sdd/execucao.json. A IA mantém a
+por rotina do trabalho ativo. ROADMAP projeta posições consecutivas (1ª, 2ª…) na
+fila e uma tabela reduzida de encerradas, com estado/verificação em português pelo
+método ROADMAP de docs/padroes/CONTRATOS.md. Priority numérico e Executor não são
+exibidos; seus campos permanecem nos tickets. Posições são recalculadas a partir
+dos tickets, sem campo adicional de ordem. Ações pendentes do usuário mantém
+fontes e desbloqueios concretos. Não há JSON paralelo ou armazenamento de backlog em .sdd/execucao.json. A IA mantém a
 projeção e seus vínculos; a CLI distribui o padrão sem interpretar ou executar tasks.
 Histórico narrativo removido do ROADMAP foi preservado com origem em T-016.

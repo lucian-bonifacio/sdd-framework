@@ -16,13 +16,10 @@ ativo por rotina nem use a ordem do ID como prioridade.
 ## Comandos e verificações
 [PREENCHER: para cada verificação, indicar finalidade, comando real ou procedimento manual reproduzível, diretório, pré-requisitos, quando executar e resultado esperado. Distinguir testes durante a implementação das verificações exigidas para concluir; apontar arquivos/configurações que definem esses comandos e registrar impedimentos reais.]
 
-Use o plano de verificação do ticket. Execute as verificações pertinentes durante
-a mudança e as exigidas pelo projeto antes de concluir. Crie testes permanentes
-quando necessários para demonstrar comportamento ou evitar regressões; cubra
-falhas e limites relevantes. Reaproveite resultados enquanto código, entradas e
-ambiente pertinentes permanecerem válidos; repita ou amplie por mudança, falha ou
-lacuna identificada, sem dispensar checks obrigatórios. Não declare sucesso em
-verificação não executada; registre resultado, evidência e limitação no ticket.
+Aplique docs/padroes/CONTRATOS.md#testes-automatizados e o plano da seção
+Verificação do ticket em specs/NNN-nome/tasks/T-NNN.md. Os comandos e gatilhos
+permanentes ficam nesta seção de AGENTS.md; cenários, alternativas justificadas e
+resultados ficam no ticket. Teste obrigatório não executado impede sua conclusão.
 
 ## Higiene do workspace
 [PREENCHER: diretórios permitidos para temporários, comandos de limpeza com alvos delimitados e como identificar processos, serviços ou recursos de teste da própria execução; indicar o que deve ser preservado.]
@@ -60,8 +57,9 @@ pendências reais. Prepare CHECKPOINT quando houver passagem ou interrupção, c
 próxima ação e referências suficientes para retomar.
 [PREENCHER: caminhos e convenções locais de documentação e evidências; referenciar docs/padroes/CONTRATOS.md para manutenção documental.]
 
-Preserve o bloco administrado de acionamento explícito de docs/governador.md.
+Preserve o bloco administrado de docs/governador.md: ele encaminha às regras de
+acionamento e avanço documental, sem necessidade de repeti-las neste arquivo.
 Incorpore instruções compatíveis do projeto e somente processos divergentes
 especificamente autorizados. Atualize comandos e convenções quando o trabalho
-os afetar. Não inicie o governador ao abrir uma sessão ou executar tarefa comum;
-após a organização, continue pela execução independente do projeto.
+os afetar. Após concluir o escopo documental, continue pela execução independente
+do projeto.

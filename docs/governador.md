@@ -8,8 +8,9 @@ projeto; links Markdown são relativos a este arquivo.
 
 Execute somente por acionamento explícito do usuário ou da skill SDD. Instalação,
 update, leitura do arquivo e abertura de sessão não são acionamento. O controle
-de execução fica em .sdd/execucao.json; decisões e trabalho do projeto ficam nos
-documentos governados pertinentes, sem seção de aplicação neste arquivo.
+de execução fica em .sdd/execucao.json; os destinos das decisões, ações e resultados
+estão em [Estados dos escopos do governador](padroes/CONTRATOS.md#estados-dos-escopos-do-governador).
+Não acrescente seção de aplicação neste arquivo.
 Use os [contratos](padroes/CONTRATOS.md) em todos os escopos. Os templates,
 contratos e a skill do SDD Framework são as únicas referências de padrão e método
 para esta execução; não consulte templates ou skills de outros frameworks.
@@ -20,7 +21,12 @@ Encerramento são obrigatórios. Design é o único item opcional e é recomenda
 sua ausência não impede concluir os itens obrigatórios. ADR, INBOX e VALIDATION
 são registros auxiliares produzidos quando houver conteúdo que os justifique,
 não outros itens opcionais do fluxo. Um pedido restrito continua limitado ao
-escopo autorizado.
+escopo autorizado. Acionar o governador sem restringir itens autoriza o fluxo
+completo, na ordem numerada abaixo. Conclua o item atual antes de avançar e,
+comprovado seu critério de pronto, prossiga automaticamente ao próximo item
+abrangido pelo pedido, sem pedir autorização de continuação ou encerrar após uma
+entrega parcial. Para Design não adotado, siga a orientação do item 4. Consultar
+insumos de outro item não significa executá-lo antecipadamente.
 
 ### Execução e reexecução
 O critério de pronto de cada item determina o que falta e quando concluir.
@@ -34,11 +40,11 @@ Aplique estas regras a todos os itens:
 1. **Conferir o conteúdo.** Verifique cada exigência do critério de pronto no conteúdo real dos objetos de saída, incluindo todos os componentes da exigência. Quando ela abranger vários requisitos, decisões, referências ou objetos, confira todos; uma amostra não comprova o conjunto.
 2. **Executar somente o necessário.** Resolva as exigências do critério de pronto não atendidas e preserve o conteúdo que já satisfaz o critério. Use a Execução de cada item para produzir o que falta, sem reconstruir partes prontas por rotina ou por ausência de registro anterior.
 3. **Registrar evidências.** Para cada exigência do critério de pronto atendida, registre em evidence de .sdd/execucao.json a exigência, o caminho do objeto e a seção ou os IDs cujo conteúdo comprova seu cumprimento. A evidência é esse conteúdo, não uma declaração de conclusão. Não acrescente relatórios de aplicação do governador aos objetos produzidos; preserve as seções de verificação e evidências próprias dos templates.
-4. **Explicitar pendências e dispensas.** Se faltar conteúdo, houver contradição impeditiva ou não for possível verificar uma exigência, registre em remaining a exigência, a lacuna concreta e a ação necessária. Só considere uma exigência do critério de pronto não aplicável quando ela for explicitamente condicional e sua hipótese não ocorrer; registre em evidence a justificativa verificável. Falta de informação ou decisão não dispensa exigência obrigatória.
-5. **Determinar a conclusão.** O item está concluído somente quando todas as exigências aplicáveis do critério de pronto estiverem comprovadas e não houver pendência. Qualquer exigência do critério de pronto não atendida ou não verificada impede conclusão. Não há estados intermediários; existência do arquivo, status, versão, hash ou declaração de conclusão não substituem a conferência. A skill explica como registrar o resultado no controle de execução.
+4. **Resolver pendências e justificar dispensas.** Se faltar conteúdo, houver contradição impeditiva ou não for possível verificar uma exigência, registre em remaining do item em .sdd/execucao.json a exigência, a lacuna concreta e a ação necessária. Resolva o que estiver ao seu alcance; se depender de informação ou decisão indispensável do usuário, procure primeiro nas fontes do projeto e, se ausente, faça a pergunta específica, explicando o critério impedido e propondo alternativas fundamentadas quando possível. Aguarde a resposta sem avançar ao próximo item; incorpore a resposta no objeto de saída do item (ou em docs/decisions/ADR-NNN.md para decisão transversal) e retome o critério pendente. Não deixe a pergunta para quando o usuário cobrar a conclusão, não presuma aceite e não invente respostas. Só considere uma exigência não aplicável quando ela for explicitamente condicional e sua hipótese não ocorrer; registre em evidence do mesmo item a justificativa verificável. Falta de informação ou decisão não dispensa exigência obrigatória.
+5. **Determinar a conclusão.** O item está concluído somente quando todas as exigências aplicáveis do critério de pronto estiverem comprovadas e não houver pendência. Qualquer exigência não atendida ou não verificada impede conclusão e avanço. Não há estados intermediários; existência do arquivo, status editorial (inclusive draft ou accepted), versão, hash ou declaração não substituem a conferência. A skill explica como registrar completed e applied em .sdd/execucao.json. Se houver impedimento que exija interromper, informe o item e a ação necessária e registre o ponto de retomada em CHECKPOINT.md; essa passagem não conclui o item 8 nem exige novo acionamento para retomar o mesmo pedido autorizado.
 6. **Limitar a reexecução.** Após conclusão, no próximo acionamento explícito, consulte .sdd/execucao.json e trate somente alterações do framework e seus impactos diretos nas exigências afetadas do critério de pronto. Preserve conteúdo e evidências válidas das exigências não afetadas; sem alteração pertinente, preserve o objeto. O update identifica mudanças, sem executar o governador ou declarar critérios cumpridos.
 
-<!-- SDD:USES:["docs/padroes/CONTRATOS.md#", "docs/padroes/CONTRATOS.md#escrita-e-fontes", "docs/padroes/CONTRATOS.md#metadados-e-identificacao", "docs/padroes/CONTRATOS.md#execucao-dos-tickets-e-manutencao", "docs/padroes/CONTRATOS.md#estados-dos-escopos-do-governador", "docs/padroes/CONTRATOS.md#reconstrucao-e-referencias", ".agents/skills/sdd/SKILL.md", ".claude/skills/sdd/SKILL.md", ".agents/skills/sdd/agents/openai.yaml"] -->
+<!-- SDD:USES:["docs/padroes/CONTRATOS.md#", "docs/padroes/CONTRATOS.md#escrita-e-fontes", "docs/padroes/CONTRATOS.md#metadados-e-identificacao", "docs/padroes/CONTRATOS.md#execucao-dos-tickets-e-manutencao", "docs/padroes/CONTRATOS.md#estados-dos-escopos-do-governador", "docs/padroes/CONTRATOS.md#reconstrucao-e-referencias", "docs/padroes/CONTRATOS.md#git-e-permissoes", ".codex/rules/sdd-git.rules", ".agents/skills/sdd/SKILL.md", ".claude/skills/sdd/SKILL.md", ".agents/skills/sdd/agents/openai.yaml"] -->
 
 <!-- SDD:ITEM:prd:START -->
 <!-- SDD:USES:["docs/padroes/PRD.md", "docs/padroes/CONTRATOS.md#prd"] -->
@@ -210,7 +216,7 @@ Quando o Design for adotado, a tarefa está resolvida quando:
 <!-- SDD:ITEM:design:END -->
 
 <!-- SDD:ITEM:tasks:START -->
-<!-- SDD:USES:["docs/padroes/TASK.md", "docs/padroes/CONTRATOS.md#tasks"] -->
+<!-- SDD:USES:["docs/padroes/TASK.md", "docs/padroes/CONTRATOS.md#tasks", "docs/padroes/CONTRATOS.md#testes-automatizados"] -->
 ## 5. Tasks
 
 ### Objetivo
@@ -239,7 +245,7 @@ Padrões: [template TASK](padroes/TASK.md),
 ### Execução
 1. Localize tickets e planos de trabalho; identifique quais obrigações da SPEC e do Design adotado já estão cobertas e onde falta cobertura, preservando IDs, estados, autorizações, resultados e evidências válidos.
 2. Decomponha as obrigações sem cobertura em ações limitadas. Identifique requisitos e critérios de aceitação cobertos por cada ticket e documentos afetados, sem inventar novo escopo de produto.
-3. Construa os tickets pelo template próprio, com objetivo, escopo, critérios de aceitação, executor, responsabilidades e ações humanas necessárias. Para cada exigência de aceitação, defina cenário, teste ou revisão, comando/procedimento, diretório, pré-requisitos, resultado esperado e evidência prevista; identifique testes a criar/ajustar quando necessários. Referencie as regras permanentes de AGENTS, sem copiá-las, e planeje os alvos temporários, recursos a encerrar e itens a preservar.
+3. Construa os tickets pelo template próprio, com objetivo, escopo, critérios de aceitação, executor, responsabilidades e ações humanas necessárias. Para cada exigência de aceitação, defina cenário, teste ou revisão, comando/procedimento, diretório, pré-requisitos, resultado esperado e evidência prevista; aplique a política Testes automatizados dos contratos para identificar cobertura existente, testes a criar/ajustar ou alternativa justificada. Referencie as regras permanentes de AGENTS, sem copiá-las, e planeje os alvos temporários, recursos a encerrar e itens a preservar.
 4. Defina dependencies por referências reais, sem ciclos, e priority como inteiro positivo (padrão 100, menor primeiro), preservando decisões existentes. Registre autorização e estado conforme as evidências disponíveis; prioridade pode antecipar task criada depois, mas não ignora dependências ou impedimentos. Identifique tarefas que podem começar e o que impede as demais; não fabrique aprovação nem reabra trabalho concluído por mudança de formato.
 5. Confira a cobertura das obrigações e os vínculos com SPEC/design, incluindo verificações necessárias. Encaminhe o resumo ao ROADMAP do item 6. Preparar tickets não autoriza executar a implementação.
 
@@ -248,7 +254,7 @@ A tarefa está resolvida quando:
 - os tickets seguem o template próprio, sem campos por preencher, com IDs estáveis e referências válidas;
 - todas as obrigações das SPECs e do Design adotado no escopo têm cobertura identificável nos tickets;
 - cada ticket define ação limitada, escopo, requisitos e aceitação cobertos, responsabilidades e plano de verificação executável com cenário, comando/procedimento, diretório, pré-requisitos, resultado esperado e evidência;
-- testes permanentes necessários estão previstos, verificações durante a execução e antes da conclusão estão identificadas, e limpeza/encerramento de recursos próprios têm alvos e método delimitados, com itens a preservar ou ausência de temporários declarados;
+- a escolha de automação ou alternativa tem justificativa concreta conforme Testes automatizados dos contratos, com cobertura existente ou testes necessários identificados; verificações durante a execução e antes da conclusão estão definidas, e limpeza/encerramento de recursos próprios têm alvos e método delimitados, com itens a preservar ou ausência de temporários declarados;
 - priority é inteiro positivo com padrão 100 quando não houver prioridade definida, dependencies é real e sem ciclos, autorizações/estados refletem fatos e tarefas que podem começar ou seus impedimentos estão identificados;
 - resultados e evidências anteriores estão preservados e nenhuma implementação foi declarada concluída apenas pela preparação do ticket;
 - ações humanas necessárias estão explícitas e não há lacuna impeditiva na definição dos tickets. Tickets de implementação podem continuar pendentes.
@@ -265,8 +271,8 @@ dependências, impedimentos e estado em tabelas vinculadas aos tickets reais.
 ### Objeto de saída
 docs/ROADMAP.md pelo template ROADMAP do SDD Framework: fila de execução, tasks
 encerradas e ações humanas. Priority e dependencies pertencem aos metadados dos
-tickets; o ROADMAP os apresenta, sem manter outra fonte de planejamento ou um
-JSON paralelo. .sdd/execucao.json continua exclusivo do controle do framework.
+tickets; o ROADMAP apresenta posições derivadas dessa prioridade e as dependências,
+sem manter outra fonte de planejamento ou um JSON paralelo. .sdd/execucao.json continua exclusivo do controle do framework.
 
 ### Requisitos e insumos
 Use os tickets do escopo, suas SPECs e decisões reais de prioridade/adiamento.
@@ -281,23 +287,23 @@ Padrões: [template ROADMAP](padroes/ROADMAP.md),
 
 ### Execução
 1. Localize tickets e fontes de planejamento; preserve prioridades, dependências e adiamentos aceitos. Registre a prioridade e as dependências reais em priority/dependencies dos tickets, preservando vínculos e decisões existentes.
-2. Construa a fila pelo template, com prioridade, link do ticket, trabalho, dependências/impedimentos, estado, executor e verificação. Ordene por priority crescente e, em empate, pelo caminho completo do ticket. Bloqueios e ações humanas ficam visíveis, sem serem ignorados pela prioridade.
-3. Separe as tasks concluídas/canceladas da fila ativa. Não reabra tarefas encerradas nem interrompa trabalho ativo por rotina para adequar a apresentação.
-4. Preserve histórico detalhado e justificativas nos tickets/decisões pertinentes, com origem e referências, antes de retirar narrativas do ROADMAP. Não mantenha seção paralela de Prioridades e dependências ou diário de versões na fila.
+2. Construa a fila com as colunas do template e aplique ordenação, posições consecutivas em Ordem e tradução de estado/verificação pelo método ROADMAP dos contratos. Confira os valores nos tickets; bloqueios e ações humanas ficam visíveis, sem serem ignorados pela posição.
+3. Separe as tarefas concluídas/canceladas da fila ativa, usando a tabela reduzida do template. Não reabra tarefas encerradas nem interrompa trabalho ativo por rotina para adequar a apresentação.
+4. Preserve histórico detalhado e justificativas em specs/NNN-nome/tasks/T-NNN.md ou docs/decisions/ADR-NNN.md, conforme sua função definida nos contratos, com origem e referências, antes de retirar narrativas do ROADMAP. Não mantenha seção paralela de Prioridades e dependências ou diário de versões na fila.
 5. Relacione ações humanas ao ticket e ao trabalho impedido; adiamentos sem task apontam sua fonte governada. Confira a tabela contra os tickets, sem fabricar avanço, prioridade especial ou autorização.
 
 ### Critério de pronto
 A tarefa está resolvida quando:
 - o ROADMAP segue o template com fila, tasks encerradas e ações humanas, sem campos por preencher ou histórico narrativo de execução;
-- cada task do escopo está representada com link válido, trabalho, estado, executor e verificação fiéis ao ticket;
-- a fila apresenta priority e dependências/impedimentos dos tickets, ordenada por menor priority e desempate pelo caminho completo, sem confundir posição com autorização para executar;
+- cada tarefa do escopo está representada uma única vez com link válido, trabalho, estado e verificação fiéis ao ticket, traduzidos pelo método ROADMAP;
+- a fila tem posições consecutivas derivadas de priority/caminho e dependências e impedimentos explícitos, sem confundir posição com autorização para executar; as colunas das duas tabelas correspondem ao template;
 - prioridades existentes, IDs, dependências e adiamentos estão preservados em suas fontes, sem JSON paralelo ou dependência técnica inventada para impor ordem;
 - ações humanas indicam fonte, ação concreta e dependentes, ou sua ausência é declarada;
-- o conteúdo retirado foi preservado nos registros pertinentes e não há contradição impeditiva com tickets ou SPECs.
+- o conteúdo retirado tem destino identificável nos tickets ou ADRs indicados na Execução, e não há contradição impeditiva com tickets ou SPECs.
 <!-- SDD:ITEM:roadmap:END -->
 
 <!-- SDD:ITEM:agents:START -->
-<!-- SDD:USES:["docs/padroes/AGENTS.md", "docs/padroes/README.md", "docs/padroes/CONTRATOS.md#agents-e-readme"] -->
+<!-- SDD:USES:["docs/padroes/AGENTS.md", "docs/padroes/README.md", "docs/padroes/CONTRATOS.md#agents-e-readme", "docs/padroes/CONTRATOS.md#testes-automatizados", "docs/padroes/CONTRATOS.md#git-e-permissoes"] -->
 ## 7. AGENTS e README
 
 ### Objetivo
@@ -323,9 +329,9 @@ Padrões: [template AGENTS](padroes/AGENTS.md),
 
 ### Execução
 1. Localize instruções e explicações de uso; identifique contexto, comandos, pré-requisitos, convenções e restrições válidos, bem como contradições que exijam decisão.
-2. Construa AGENTS pelo template com contexto/escopo, comandos/verificações, higiene do workspace, qualidade/convenções, proteção/autorização e documentação/entrega. Derive dos arquivos reais os comandos, diretórios, pré-requisitos, momentos de execução e resultados esperados; defina alvos temporários permitidos, identificação e encerramento de recursos próprios e itens a preservar. Incorpore instruções particulares compatíveis e referências ao Design System quando aplicável; substitua slogans por regras executáveis do projeto.
+2. Construa AGENTS pelo template com contexto/escopo, comandos/verificações, higiene do workspace, qualidade/convenções, proteção/autorização e documentação/entrega. Derive dos arquivos reais os comandos, diretórios, pré-requisitos, momentos de execução e resultados esperados; defina alvos temporários permitidos, identificação e encerramento de recursos próprios e itens a preservar. Incorpore a política Testes automatizados dos contratos por referência em Comandos e verificações de AGENTS.md, com os comandos/gatilhos locais, instruções particulares compatíveis e referências ao Design System quando aplicável; substitua slogans por regras executáveis do projeto.
 3. Construa o README pelo template: objetivo, público, pré-requisitos e comandos reais para começar. Distinga capacidades disponíveis de entregas futuras e explicite limites conhecidos de uso ou verificação, sem afirmar execução que não ocorreu.
-4. Preserve os blocos administrados de AGENTS/CLAUDE e a configuração existente. Ajuste o encaminhamento próprio de CLAUDE quando necessário, sem duplicar as instruções de AGENTS ou executar init/update como acionamento do governador.
+4. Preserve os blocos administrados de AGENTS/CLAUDE e a configuração existente. Confira o encaminhamento de Git e permissões no bloco administrado de AGENTS.md, sem repeti-lo na seção própria ou duplicar a matriz de .codex/rules/sdd-git.rules; não presuma que a regra nativa do Codex se aplica a outras integrações. Ajuste o encaminhamento próprio de CLAUDE quando necessário, sem duplicar as instruções de AGENTS ou executar init/update como acionamento do governador.
 5. Confira referências e coerência com os arquivos do projeto. Preserve conhecimento antes de substituir documentos concorrentes autorizados; mantenha processo divergente somente com decisão específica em ADR aceita.
 
 ### Critério de pronto
@@ -351,7 +357,7 @@ com próxima ação clara para a execução independente do projeto.
 
 ### Objeto de saída
 CHECKPOINT.md pelo template CHECKPOINT do SDD Framework, com referências aos
-objetos entregues e aos registros pertinentes. Decisões reais ficam em
+objetos entregues e aos tickets em specs/NNN-nome/tasks/T-NNN.md. Decisões transversais ficam em
 docs/decisions/ADR-NNN.md; propostas ainda não aceitas em docs/inbox/ITEM-NNN.md;
 evidências extensas, quando necessárias, em specs/NNN-nome/validation/ pelo template
 VALIDATION. Não crie esses documentos condicionais sem conteúdo que os justifique.
@@ -379,7 +385,7 @@ Padrões: [CHECKPOINT](padroes/CHECKPOINT.md),
 ### Critério de pronto
 A tarefa está resolvida quando:
 - os objetos obrigatórios do escopo solicitado atendem aos critérios próprios, independentemente da adoção de Design, com referências válidas e sem contradição ou decisão impeditiva;
-- ações, resultados, decisões e propostas estão nos documentos pertinentes, sem relatório de aplicação no governador;
+- ações e resultados estão nos tickets, decisões transversais nas ADRs e propostas na INBOX, nos caminhos definidos em Objeto de saída e na Execução, sem relatório de aplicação no governador;
 - o CHECKPOINT segue o template, sem campos por preencher, e corresponde ao estado real, incluindo verificações, limites e alterações não commitadas;
 - pendências de implementação, ações humanas e adiamentos fora do escopo documental concluído estão visíveis, sem serem declarados resolvidos;
 - se forem necessários ADR, INBOX ou relatório de validação, esses documentos seguem seus templates, preservam origem e evidências e estão referenciados;

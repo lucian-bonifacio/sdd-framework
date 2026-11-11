@@ -1,125 +1,155 @@
 ---
-status: active
-updated: 2026-11-10
-task: specs/001-governador/tasks/T-017.md
+status: closed
+updated: 2026-11-11
+task: none
 ---
-# Checkpoint — Encerramento da sessão e revisão pendente do ROADMAP
+# Checkpoint — Encerramento da sessão
 
 ## Objetivo e tarefa atual
-Sessão encerrada com versão 0.4.2 mantida. T-001 a T-016 concluídas; T-017
-registrada como pending, executor joint e authorization pending. O mantenedor
-não gostou da apresentação de T-016, especialmente das colunas Prioridade e
-Dependências/impedimentos. Registrar a pendência não autoriza escolher e implementar
-outro layout agora. ROADMAP marcado draft; não considerar sua apresentação final aceita.
+Sessão encerrada a pedido do mantenedor, com T-017, T-019, T-020 e T-021 concluídas.
+Sem tarefa em execução. Pendentes apenas T-018 (init/update pelo GitHub) e T-022
+(planejar Design System), na ordem apresentada em docs/ROADMAP.md. Ambas têm
+status pending e authorization pending; retomada não autoriza implementar.
+Versão 0.4.2 mantida, sem release.
 
-O pedido atual autoriza um commit local de todos os ajustes desta sessão, incluindo
-este checkpoint, a pendência T-017 e a movimentação de governador.md. Não autoriza
-push desse conjunto, merge da branch Windows ou release. Consultar git log/status
-para confirmar o commit; este arquivo não tenta registrar seu próprio hash.
+O mantenedor autorizou um commit local com os ajustes desta sessão e este checkpoint.
+Conferir git log -1 --oneline e git status --short ao retomar para confirmar o hash
+e o estado resultante; este documento não registra seu próprio hash. Não há
+pedido de push, merge, publicação ou alteração global de configuração.
 
 ## Estado do trabalho
-- T-011: conferência e conclusão centralizadas em passos nas regras gerais. Usar
-  “exigências do critério de pronto”, evidências por caminho/seção/IDs e pendências
-  com lacuna e ação; nenhuma conclusão por simples status, hash ou declaração.
-- T-012: decisões do PRD aplicadas às demais seções, métodos, templates e skill.
-  Cada item tem objetivo, objeto de saída, requisitos/insumos/padrões, execução
-  específica e critério de pronto. Regras comuns não se repetem nos itens.
-- T-013: oito itens. Arquitetura obrigatória no item 3; Design opcional e recomendado
-  no item 4, único item opcional do fluxo. SPEC aceita design none/inline/separate;
-  ausência de Design não bloqueia os demais nem autoriza apagar conhecimento.
-- T-014: doze templates revisados para conteúdo concreto. AGENTS concentra contexto/
-  escopo, verificações, higiene, qualidade, proteção e entrega com parâmetros locais.
-  Tasks detalham cenários, comandos/procedimentos, diretórios, pré-requisitos,
-  resultados esperados, evidências e limpeza. Testes permanentes, fixtures úteis,
-  evidências e trabalho anterior são preservados. Informação indispensável ausente
-  é pendência, sem inventar parâmetros. AGENTS deste projeto também foi ajustado.
-- T-015: governador instalado em docs/governador.md por padrão e já movido neste
-  projeto por update. Fonte permanece src/sdd_framework/assets/governador.md.
-  Migração valida o caminho antigo registrado, recusa alterações/ausência, destino
-  ocupado ou symlinks, preserva conteúdo próprio e tem rollback. Arquivo antigo sem
-  procedência não é removido. Links Markdown partem de docs/; caminhos textuais e
-  SDD:USES partem da raiz. AGENTS/CLAUDE, skill e referências foram alinhados.
-- T-002: pendência Windows encerrada após autorização expressa de antecipar a
-  investigação, sem declarar o piloto concluído. Corrigidos encoding implícito
-  dos testes, tradução de newline das fixtures, injeção Claude com CRLF e leitura
-  do registro legado CRLF sem alterar bytes protegidos pelo hash. .gitattributes
-  mantém LF no checkout; consumidores continuam aceitando CRLF.
-- T-016: ROADMAP passou a fila e encerradas, com priority/dependencies nos tickets
-  YAML, menor inteiro positivo primeiro, padrão 100 e desempate por caminho.
-  Prioridade não ignora autorização, dependência ou impedimento. Tickets anteriores
-  preservados e alias depends_on normalizado. Histórico narrativo retirado foi
-  preservado literalmente no próprio T-016. Templates, contratos, skill e governador
-  sincronizados por update, sem JSON paralelo. A implementação está concluída,
-  mas o mantenedor pediu nova revisão visual em T-017; não repetir o layout por rotina.
+- T-019: governador completo segue os itens na ordem, concluindo os critérios do
+  item atual antes de avançar e prosseguindo sem novo pedido de continuação.
+  Decisão indispensável ausente exige pergunta concreta e retomada do mesmo item;
+  não encerrar após formatar o PRD nem avançar com lacunas. draft/accepted são
+  metadados editoriais, sem terceira condição operacional. Pedidos limitados e
+  Design não adotado preservam seu escopo. Regra geral centralizada, sem repetição
+  em cada item; evidência em specs/001-governador/validation/T-019.md.
+- T-017: ROADMAP aceito, com Ordem (1ª, 2ª…) na fila; dependências/impedimentos
+  visíveis; sem Executor ou prioridade numérica nas tabelas. Encerradas têm somente
+  Tarefa, Trabalho, Estado e Verificação. Tradução centralizada em
+  docs/padroes/CONTRATOS.md#roadmap. Ações pendentes do usuário mostram fonte,
+  decisão/informação e trabalho dependente. Prioridade técnica permanece nos
+  tickets; não mover só a linha para alterar a fonte. Evidência em
+  specs/001-governador/validation/T-017.md; histórico anterior em T-016.
+- T-020: Testes automatizados definidos em
+  docs/padroes/CONTRATOS.md#testes-automatizados. Governador exige planejar cobertura,
+  automação ou alternativa justificada; implementação executa o plano/checks e
+  registra resultados no ticket. Templates TASK/AGENTS e skill referenciam essa
+  política, com parâmetros locais. Não há TDD universal, cobertura percentual ou
+  stack obrigatórios; testes existentes válidos são reaproveitados. Evidência em
+  specs/001-governador/validation/T-020.md.
+- T-021: política Git em .codex/rules/sdd-git.rules, distribuída por init/update
+  e incluída no pacote portátil. Fonte em
+  src/sdd_framework/assets/integrations/codex/sdd-git.rules; project.py administra
+  somente esse caminho em .codex, com hashes, conflitos, symlinks e rollback.
+  Consultas usuais ficam no sandbox sem allow de elevação; mutações e variantes
+  listadas recebem prompt no avaliador Codex. Encaminhamento único no bloco SDD
+  de AGENTS, sem matriz copiada. config.toml existente e outras rules particulares
+  preservados. Codex precisa reiniciar em projeto confiável para carregar rules;
+  limites por prefixo/superfície em CONTRATOS.md#git-e-permissoes. Evidência em
+  specs/001-governador/validation/T-021.md.
 
-A CLI foi instalada/atualizada, mas o governador não foi executado nesta sessão.
-Os documentos reais, inclusive ROADMAP e tickets, já são usados e mantidos
-normalmente; não dependem de um acionamento completo para “entrar em funcionamento”.
+Essas entregas estão incorporadas às fontes distribuídas em
+src/sdd_framework/assets e ao dist/sdd.pyz reconstruído; as cópias deste projeto
+foram sincronizadas por update. Consumidores recebem os recursos via update;
+a aplicação dos padrões aos seus documentos próprios exige acionar o governador.
+Rules Git são carregadas pelo Codex ao reiniciar. Os testes do framework em tests/
+não são instalados no consumidor; este recebe instruções para os testes do produto.
 
-Evidência remota de T-002: commit 5e4f530edaa049722f1ddcd7ea8772f2623a2c49 na
-branch autorizada codex/t002-windows-utf8, sobre 48d13f1. Somente .gitattributes,
-changes.py, project.py e tests/test_framework.py foram enviados. CI 42938396599
-passou nos seis jobs Windows/Ubuntu/macOS com Python 3.11/3.14; cada job Windows
-executou 50 testes e build. Essa CI certifica o commit isolado, não todo o conjunto
-local desta sessão. Não houve merge/release. A correção equivalente está no checkout.
+### Verificações e limites
+Última suíte: python3 -m unittest discover -s tests -v, 67 testes OK/código 0,
+15,195 s, sem skips, Linux/Python 3.14.4. Inclui 28 avaliações de tokens em quatro
+testes com codex-cli 0.167.1, sem executar as mutações Git representadas.
+python3 tools/build_release.py retornou 0 após a última alteração distribuída.
+Consumidor anterior e zipapp fora do checkout aprovados; updates idempotentes,
+configuração e nove registros da IA preservados. Update local final repetido
+manteve 23 arquivos byte a byte idênticos. Procedimentos em validação T-021.
 
-Verificação local final de T-016: 56 testes passaram (6,171 s), pacote reconstruído
-e verificado por init/update fora do checkout. Update idempotente; campos da IA
-preservados nos nove registros. Dezesseis tickets com dependências válidas sem
-ciclos, tabela e histórico conferidos. Desde então, as alterações são documentais:
-registro de T-017, sinalização da apresentação não aceita e fechamento da sessão.
-Reaproveitar essas evidências enquanto código/assets/ambiente pertinentes forem válidos.
+dist/sdd.pyz tem SHA-256 e6c0e493a56c56351a3c82d1568cfaeef6d0e209ab64305e2fbbc9d9b137e097.
+É gerado e ignorado pelo Git; preservar para entrega, sem adicioná-lo ao commit.
+Não vem em clone; reconstruir com python3 tools/build_release.py quando necessário.
+Após essas verificações, somente documentos de registro/passagem foram alterados;
+reaproveitar as evidências enquanto código/assets/entradas pertinentes forem válidos.
+Conferência de fechamento: links locais, fila/tickets e git diff --check, esperado
+código 0 sem diagnóstico. Nenhuma nova suíte/build é exigida por esta passagem.
 
-Dist/sdd.pyz é gerado e ignorado pelo Git; não vem no clone. Gerar com
-python3 tools/build_release.py quando necessário. Consumidores/pacotes temporários
-de teste foram descartados; cópias de preservação /tmp/sdd-antes-* e o diretório
-isolado /tmp/sdd-t002-correcao-87e5v59u foram mantidos para recuperação/revisão.
-O resultado e a continuidade estão nos arquivos e tickets, não dependem dessas cópias.
+Não houve execução do governador, agente no consumidor real, prompts em sessão
+nova, piloto no tax ou CI remota nova. O piloto está sendo conduzido pelo mantenedor;
+não atribuir sua conclusão aos testes locais. A CLI não executa código/testes do
+consumidor e não intercepta todas as ações livres de IA.
+
+### Git e preservação
+O conjunto autorizado para commit inclui fontes, código da CLI, testes, recursos
+instalados (.agents/.claude, .codex/rules, .sdd, docs/padroes e blocos dos agentes),
+documentação, T-017 atualizado, T-018 a T-022 e validações T-017/T-019/T-020/T-021.
+Esses tickets/relatórios e a regra nova estavam sem rastreio antes do commit;
+não excluir por essa condição. Base de trabalho antes do fechamento: 28bc1b7.
+
+TemporaryDirectory de consumidores/pacotes/regras de teste foram descartados;
+nenhum serviço de teste iniciado. Preservar tests/, fixtures, relatórios e pacote.
+Cópias recuperáveis mantidas: /tmp/sdd-antes-t019-dvshuhwj,
+/tmp/sdd-antes-t017-ikkevqz2 e /tmp/sdd-antes-t020-t021-pucsm1o0.
+O checkpoint anterior integral foi preservado em /tmp/sdd-antes-encerramento-h3_hfw9j/CHECKPOINT.md antes de
+consolidar esta passagem; manter recuperável enquanto necessário. Não remover
+outras cópias /tmp/sdd-antes-* ou recursos antigos por rotina. A preparação Windows
+em /tmp/sdd-t002-correcao-87e5v59u foi registrada anteriormente em T-002; sua evidência
+durável está no ticket e na branch isolada, não depende do temporário.
 
 ## Decisões e pendências
-Controle em .sdd/execucao.json, formato 2: installed/applied guardam hash e conteúdo;
-baseline limita a referência anterior quando não há applied; completed é booleano;
-evidence comprova as exigências atendidas, remaining indica apenas as faltantes e
-pending consolida diferenças. Update mantém installed sem concluir aplicação;
-a IA copia para applied somente após cumprir critérios. execution_hash protege
-installed no manifesto; não adulterar hashes para esconder conflitos. Legacy_pending
-preserva uma única vez o registro antigo até reconciliação, sem inventar conclusões.
+1. T-018: definir origem GitHub, política de versão e procedimento para init/update
+   sem checkout local; autorizar o escopo concreto antes de implementar.
+2. T-022: Design pretendido pelo mantenedor é Design System (telas, padrões visuais
+   e cores), diferente do design técnico atual. Planejar objetivo, objetos, condição
+   de aplicação, critérios de pronto e relação com os demais itens; preservar o
+   conhecimento técnico existente ao definir seu destino. Registro solicitado
+   depois de T-020/T-021; não houve alteração do item Design ou de seu template.
 
-Critério de pronto é o ponto de partida: preservar conteúdo atendido e executar
-somente o que falta. Após conclusão, tratar apenas alterações pertinentes do framework
-e impactos diretos; sem mudança pertinente, preservar. Não separar projeto novo/
-existente, adotar formato antigo como padrão alternativo ou refazer tudo por falta
-de registro. Preservar conhecimento, decisões, IDs, configurações e evidências.
+Ambas têm priority 100, sem dependências técnicas; empate pelo caminho completo
+mantém T-018 antes de T-022. Não inferir prioridade pelo ID nem usar preferência
+como dependência técnica. Só executar tasks autorizadas, sem impedimentos; não
+interromper trabalho ativo por rotina.
 
-Fontes canônicas em src/sdd_framework/assets; cópias instaladas via update.
-Uma skill SDD genérica em ambas as integrações. Padrões e métodos próprios;
-referências externas são bibliografia de desenvolvimento, não dependência de execução.
-Governador contém somente instruções, sem relatório de aplicação; ações/resultados
-ficam nos tickets, decisões nas ADRs, resumo no ROADMAP e passagem no CHECKPOINT.
-ADR-003 substitui a arquitetura operacional antiga; ADR-001/002 são históricas.
+O piloto no tax permanece com o mantenedor. Publicação/release, licença e memória
+continuam adiadas. Correção Windows já concluída em T-002: commit isolado
+5e4f530edaa049722f1ddcd7ea8772f2623a2c49, branch codex/t002-windows-utf8,
+CI 42938396599 aprovada nos seis jobs Windows/Ubuntu/macOS com Python 3.11/3.14.
+Correções equivalentes estão na main local; merge formal da branch isolada não é
+pendência técnica e não está autorizado. Essa CI não certifica as mudanças desta sessão.
 
-T-017 é a próxima pendência: rever apresentação do ROADMAP, principalmente Prioridade
-e Dependências. Preservar prioridade/dependências nos tickets e histórico até definir
-novo formato; a rejeição das colunas não autoriza remover esses dados. A revisão
-futura deve alcançar os recursos pertinentes distribuídos aos consumidores.
+ADR-003 substitui a arquitetura antiga; ADR-001/002 são históricas. Conhecimento e
+resultados de T-001 a T-016 estão nos tickets, incluindo a preservação literal do
+ROADMAP anterior em T-016. Governador contém instruções, sem relatório particular.
+.sdd/execucao.json formato 2 guarda installed/applied/baseline, completed binário,
+evidence/remaining e pending consolidado; somente update administra installed e
+.sdd/manifest.json. Não editar hashes para esconder conflito nem concluir por
+arquivo/status/hash. Preservar evidências válidas e tratar só critérios faltantes
+ou alterações pertinentes/impactos diretos. Fontes canônicas são os assets; recursos
+instalados são atualizados pela CLI, sem copiar conteúdo particular a consumidores.
 
-Piloto no tax continua com o mantenedor, sem execução nesta sessão. Release,
-licença e memória continuam adiadas. Autorização da branch isolada Windows não
-permite merge ou outros envios. A autorização atual é somente para o commit local
-do conjunto desta sessão; nenhum push novo foi solicitado.
+Preferência de comunicação do mantenedor: dizer explicitamente se a mudança foi
+incorporada à distribuição, se é entregue via init/update e como foi validada em
+consumidor. Evitar apenas “fontes sincronizadas”. Toda orientação de registro deve
+nomear arquivo/campos e reutilizar a regra existente em vez de duplicá-la.
 
 ## Próximo passo
-Retomar por T-017 e perguntar ao mantenedor pelo formato desejado ou apresentar
-uma proposta concreta antes de implementar nova apresentação. Não executar essa
-revisão, o governador ou ações no tax por mera retomada. Conferir Git e arquivos
-reais; não reabrir T-002 nem repetir correções já comprovadas sem motivo novo.
+Retomar por AGENTS, este checkpoint, ROADMAP e tickets, confrontando Git e arquivos.
+Definir T-018 ou discutir T-022 conforme orientação do mantenedor; não implementar
+por mera retomada nem reabrir tarefas concluídas. Não executar no tax ou acionar o
+governador automaticamente. Respeitar adiamentos, versão e autorização só local.
 
 ## Leitura para retomada
 [AGENTS](AGENTS.md), [ROADMAP](docs/ROADMAP.md),
+[T-018](specs/001-governador/tasks/T-018.md),
+[T-022](specs/001-governador/tasks/T-022.md),
+[T-019](specs/001-governador/tasks/T-019.md),
 [T-017](specs/001-governador/tasks/T-017.md),
-[T-016](specs/001-governador/tasks/T-016.md),
+[T-020](specs/001-governador/tasks/T-020.md),
+[T-021](specs/001-governador/tasks/T-021.md),
+[validação T-020](specs/001-governador/validation/T-020.md),
+[validação T-021](specs/001-governador/validation/T-021.md),
 [T-002](specs/001-governador/tasks/T-002.md),
+[T-016](specs/001-governador/tasks/T-016.md),
 [governador](docs/governador.md), [contratos](docs/padroes/CONTRATOS.md),
 [skill](.agents/skills/sdd/SKILL.md), [PRD](docs/PRD.md),
 [SPEC](specs/001-governador/SPEC.md) e [ADR-003](docs/decisions/ADR-003.md).
-Evidências detalhadas da sessão em T-011 a T-016.

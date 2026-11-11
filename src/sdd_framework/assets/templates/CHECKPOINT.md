@@ -6,7 +6,7 @@ task: none
 # Checkpoint
 
 ## Objetivo e tarefa atual
-[PREENCHER: objetivo autorizado, ticket e ponto preciso da interrupção.]
+[PREENCHER: objetivo autorizado, caminho do ticket e ponto preciso da interrupção. Se o governador estiver incompleto, identificar o item atual e referenciar suas exigências em items.<id>.remaining de .sdd/execucao.json; passagem não significa conclusão do fluxo.]
 
 ## Estado do trabalho
 [PREENCHER: feito no escopo solicitado, tentativas, verificações, seus limites e alterações não commitadas; conferir arquivos e Git quando disponível, sem depender de temporários como única fonte de continuidade.]

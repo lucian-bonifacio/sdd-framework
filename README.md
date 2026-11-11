@@ -20,13 +20,19 @@ Depois, abra seu agente e solicite:
 > Execute docs/governador.md para organizar este projeto conforme os padrões SDD.
 
 Também é possível invocar explicitamente a skill SDD. Ler o arquivo, iniciar uma
-sessão e executar init/update não acionam o procedimento.
+sessão e executar init/update não acionam o procedimento. O pedido acima abrange
+todos os itens obrigatórios: o agente conclui cada item antes de avançar e continua
+sem novos pedidos. Se faltar decisão indispensável, pergunta e retoma o mesmo
+item após a resposta; uma interrupção fica registrada em CHECKPOINT.md e nas
+exigências do item em .sdd/execucao.json (remaining), sem declarar conclusão.
+Pedidos expressamente limitados a um item preservam esse limite. Design é opcional.
 
 A instalação prepara somente:
 - `docs/governador.md`: instruções para a IA;
 - `docs/padroes/`: contratos e doze templates de documentos;
 - `.agents/skills/sdd/` e `.claude/skills/sdd/`: a mesma skill, com controles nativos de acionamento explícito;
 - `.codex/config.toml`, se ausente; configurações existentes são preservadas;
+- `.codex/rules/sdd-git.rules`: política Git administrada para o Codex; outras rules são preservadas;
 - blocos de entrada em AGENTS.md e CLAUDE.md, preservando o conteúdo próprio;
 - `.sdd/manifest.json`: inventário de arquivos e hashes, usado pelo update;
 - `.sdd/execucao.json`: referências instaladas/aplicadas, evidências e pendências por etapa.
@@ -51,6 +57,13 @@ python3 /caminho/sdd-framework/sdd.py update . --source /caminho/nova-distribuic
 Update modifica recursos e trechos administrados, preservando conteúdo próprio
 e os documentos do produto. Não chama a IA nem reabre organização.
 O usuário precisa acionar novamente o governador para avaliar exigências novas.
+A política Git é carregada pelo Codex ao iniciar em projeto confiável: reinicie
+sua sessão depois do update. Configuração e outras regras particulares permanecem
+preservadas; política SDD local conflitante exige reconciliação antes de atualizar.
+Os prefixos avaliados e os limites estão em
+[Git e permissões](docs/padroes/CONTRATOS.md#git-e-permissoes). As consultas usuais
+permanecem no sandbox sem aprovação adicional do SDD; a política não concede
+`allow` para sair dele nem substitui restrições do ambiente.
 
 O controle fica em `.sdd/execucao.json`, mantendo por etapa o padrão instalado,
 o aplicado e a diferença pendente. O hash identifica mudanças; as referências
@@ -101,7 +114,13 @@ do consumidor. AGENTS concentra as regras permanentes de execução, testes,
 higiene, qualidade, proteção e entrega; os tickets detalham cenários, comandos,
 resultados esperados, evidências e limpeza. Informação indispensável ausente vira
 pendência; init/update distribuem esses padrões sem produzir o conteúdo do produto.
-O ROADMAP apresenta a fila de tasks e as encerradas. Priority e dependencies ficam
+A política [Testes automatizados](docs/padroes/CONTRATOS.md#testes-automatizados)
+define comparação automática, escolha de cobertura ou alternativa justificada e
+regressão de defeitos. O governador exige planejar essas verificações nos tickets;
+a implementação executa o plano e registra resultados antes de concluir.
+O ROADMAP apresenta a fila com posições 1ª, 2ª… e uma tabela reduzida de encerradas,
+com Estado e Verificação em português. Ações pendentes do usuário reúne decisões
+ou informações necessárias e o trabalho que depende delas. Priority e dependencies ficam
 nos tickets: menor priority vem primeiro entre tarefas autorizadas e sem impedimentos,
 com padrão 100 e desempate por caminho. Uma task criada depois pode vir antes;
 não há outro JSON de planejamento nem prioridade implícita pela ordem do ID.

@@ -1,0 +1,39 @@
+# Política SDD para comandos Git no Codex; carregar em projeto confiável e reiniciar.
+# Consultas usuais (status/diff/log/show/rev-parse) não recebem allow: permanecem
+# no sandbox e na política de aprovação da sessão, sem elevação automática pelo SDD.
+# A lista abaixo inclui operações ainda não liberadas; prefixo não é autorização
+# de escopo. Variantes com opções globais são conservadoras e também pedem aprovação.
+# Não usar aliases, caminhos absolutos ou wrappers para contornar esta política.
+# Limites e precedência: docs/padroes/CONTRATOS.md#git-e-permissoes.
+
+prefix_rule(
+    pattern = ["git", [
+        "add", "am", "apply", "bisect", "branch", "checkout", "cherry-pick",
+        "clean", "clone", "commit", "config", "fetch", "filter-branch", "gc",
+        "init", "lfs", "maintenance", "merge", "mv", "notes", "pull", "push",
+        "rebase", "reflog", "remote", "replace", "reset", "restore", "revert",
+        "rm", "sparse-checkout", "stash", "submodule", "switch", "symbolic-ref",
+        "tag", "update-index", "update-ref", "worktree",
+        "-C", "-c", "--git-dir", "--work-tree", "--config-env",
+    ]],
+    decision = "prompt",
+    justification = "Revisar e aprovar a operação Git antes de alterar estado, configuração ou usar uma variante não liberada.",
+    match = [
+        "git commit -m ajuste",
+        "git push --force origin main",
+        "git reset --hard HEAD",
+        "git add arquivo.py",
+        "git branch --delete antiga",
+        "git fetch origin",
+        "git stash pop",
+        "git -C outro status",
+        "git -c alias.publicar=push publicar",
+    ],
+    not_match = [
+        "git status --short",
+        "git diff --check",
+        "git log -5 --oneline",
+        "git show HEAD:README.md",
+        "git rev-parse HEAD",
+    ],
+)

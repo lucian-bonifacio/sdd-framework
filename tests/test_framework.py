@@ -21,9 +21,9 @@ from sdd_framework.cli import main
 from sdd_framework import __version__
 from sdd_framework.changes import LOG_START, LOG_END, log_section, sections
 from sdd_framework.project import (
-    AGENT_BLOCK, CLAUDE_BLOCK, END, GOV_END, GOV_START, GOVERNOR, GOVERNOR_TEMPLATE, LEGACY_GOVERNOR,
+    AGENT_BLOCK, CLAUDE_BLOCK, END, GIT_RULES, GOV_END, GOV_START, GOVERNOR, GOVERNOR_TEMPLATE, LEGACY_GOVERNOR,
     LEGACY_BLOCK, MANIFEST, OLD_END, OLD_FLOW, OLD_START, START,
-    bundle, initialize, managed_section, update,
+    _resources, bundle, initialize, managed_section, update,
 )
 from sdd_framework.execution import EXECUTION, installed_hash, operation
 from sdd_framework.storage import SDDError, atomic_apply, digest, json_bytes, read_json, safe_path
@@ -174,6 +174,95 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result["removed"], [])
         self.assertEqual(self.snapshot(), before)
 
+    def test_git_policy_is_managed_but_custom_rules_and_config_are_preserved(self):
+        custom = self.put(".codex/rules/pessoal.rules", '# Regra particular\r\n')
+        config = self.put(".codex/config.toml", '# Configuracao particular\r\n')
+        before = (custom.read_bytes(), config.read_bytes())
+        initialize(self.root)
+        expected = bundle()["integrations/codex/sdd-git.rules"]
+        self.assertEqual((self.root / GIT_RULES).read_bytes(), expected)
+        self.assertEqual(read_json(self.root, MANIFEST)["files"][GIT_RULES], digest(expected))
+        source = self.release(change=False)
+        rule = source / "integrations/codex/sdd-git.rules"
+        rule.write_bytes(expected + b"\n# Revisao da politica.\n")
+        result = update(self.root, source)
+        self.assertFalse(result["governor_executed"])
+        self.assertEqual((self.root / GIT_RULES).read_bytes(), rule.read_bytes())
+        self.assertEqual({change["id"] for change in result["governor_changes"]}, {"geral"})
+        self.assertEqual((custom.read_bytes(), config.read_bytes()), before)
+        self.assertEqual(update(self.root, source)["changed"], [])
+
+    def test_update_adds_git_policy_to_installation_without_it(self):
+        contents = bundle()
+        contents[GOVERNOR_TEMPLATE] = contents[GOVERNOR_TEMPLATE].replace(
+            b', ".codex/rules/sdd-git.rules"', b"")
+        previous_resources = {name: data for name, data in _resources(contents).items()
+                              if name != GIT_RULES}
+        with patch("sdd_framework.project.bundle", return_value=contents), \
+                patch("sdd_framework.project._resources", return_value=previous_resources):
+            initialize(self.root)
+        self.assertFalse((self.root / GIT_RULES).exists())
+        self.assertNotIn(GIT_RULES, read_json(self.root, MANIFEST)["files"])
+        self.put("docs/PRD.md", "Contrato particular.\n")
+        result = update(self.root)
+        self.assertIn(GIT_RULES, result["changed"])
+        self.assertEqual((self.root / GIT_RULES).read_bytes(),
+                         contents["integrations/codex/sdd-git.rules"])
+        self.assertEqual((self.root / "docs/PRD.md").read_bytes(), b"Contrato particular.\n")
+        self.assertEqual(update(self.root)["changed"], [])
+
+    def test_conflicting_git_policy_aborts_before_any_installation_write(self):
+        self.put(GIT_RULES, "# Politica particular.\n")
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            initialize(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_missing_managed_git_policy_is_not_recreated(self):
+        initialize(self.root)
+        (self.root / GIT_RULES).unlink()
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_git_policy_symlink_does_not_write_to_its_target(self):
+        outside = self.base / "particular.rules"
+        outside.write_bytes(b"# Preservar.\n")
+        policy = self.root / GIT_RULES
+        policy.parent.mkdir(parents=True)
+        try:
+            policy.symlink_to(outside)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(str(exc))
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            initialize(self.root)
+        self.assertEqual(self.snapshot(), before)
+        self.assertTrue(policy.is_symlink())
+        self.assertEqual(outside.read_bytes(), b"# Preservar.\n")
+
+    def test_git_policy_write_failure_rolls_back_update(self):
+        initialize(self.root)
+        before = self.snapshot()
+        source = self.release(change=False)
+        rule = source / "integrations/codex/sdd-git.rules"
+        rule.write_bytes(rule.read_bytes() + b"\n# Revisao.\n")
+        real_replace = os.replace
+        failed = False
+
+        def replace(src, dst):
+            nonlocal failed
+            if Path(dst) == self.root / GIT_RULES and not failed:
+                failed = True
+                raise OSError("Falha simulada ao atualizar politica Git")
+            return real_replace(src, dst)
+
+        with patch("sdd_framework.storage.os.replace", replace), self.assertRaises(SDDError):
+            update(self.root, source)
+        self.assertTrue(failed)
+        self.assertEqual(self.snapshot(), before)
+
     def root_governor_installation(self):
         contents = bundle()
         with patch("sdd_framework.project.GOVERNOR", LEGACY_GOVERNOR), \
@@ -313,6 +402,8 @@ class InstallerTests(unittest.TestCase):
             "INBOX": {"encerramento"}, "VALIDATION": {"encerramento"},
         }
         methods = {
+            "Testes automatizados": ({"tasks", "agents"}, "##"),
+            "Git e permissões": ({"geral", "agents"}, "##"),
             "SPEC": ({"specs"}, "###"),
             "Arquitetura": ({"arquitetura"}, "###"),
             "Design": ({"design"}, "###"),
@@ -647,7 +738,7 @@ class InstallerTests(unittest.TestCase):
 
     def test_modified_managed_resources_abort_entire_update(self):
         initialize(self.root)
-        for name in ("docs/padroes/PRD.md", ".claude/skills/sdd/SKILL.md"):
+        for name in ("docs/padroes/PRD.md", ".claude/skills/sdd/SKILL.md", GIT_RULES):
             with self.subTest(name=name):
                 path = self.root / name
                 original = path.read_bytes()
@@ -725,6 +816,17 @@ class InstallerTests(unittest.TestCase):
         self.put("README.md", "Documento do usuario\n")
         manifest = read_json(self.root, MANIFEST)
         manifest["files"]["README.md"] = digest(b"Documento do usuario\n")
+        self.put(MANIFEST, json_bytes(manifest).decode())
+        before = self.snapshot()
+        with self.assertRaises(SDDError):
+            update(self.root)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_manifest_cannot_claim_other_codex_rules(self):
+        initialize(self.root)
+        self.put(".codex/rules/pessoal.rules", "# Particular\n")
+        manifest = read_json(self.root, MANIFEST)
+        manifest["files"][".codex/rules/pessoal.rules"] = digest(b"# Particular\n")
         self.put(MANIFEST, json_bytes(manifest).decode())
         before = self.snapshot()
         with self.assertRaises(SDDError):
@@ -881,6 +983,60 @@ class StorageTests(unittest.TestCase):
             self.assertFalse((root / "b").exists())
 
 
+@unittest.skipUnless(shutil.which("codex"), "Avaliador nativo Codex indisponivel")
+class CodexPolicyTests(unittest.TestCase):
+    def check(self, command, extra_rules=None):
+        # Somente avalia tokens: nunca executa a operacao Git representada.
+        args = [shutil.which("codex"), "execpolicy", "check", "--rules",
+                str(ROOT / "src/sdd_framework/assets/integrations/codex/sdd-git.rules")]
+        if extra_rules:
+            args += ["--rules", str(extra_rules)]
+        result = subprocess.run(args + ["--", *command], capture_output=True,
+                                text=True, encoding="utf-8", check=True)
+        return json.loads(result.stdout)
+
+    def test_read_queries_do_not_grant_execution_outside_sandbox(self):
+        for command in (["git", "status", "--short"], ["git", "diff", "--check"],
+                        ["git", "log", "-5", "--oneline"], ["git", "show", "HEAD"],
+                        ["git", "rev-parse", "HEAD"]):
+            with self.subTest(command=command):
+                result = self.check(command)
+                self.assertEqual(result["matchedRules"], [])
+                self.assertNotIn("decision", result)
+
+    def test_mutations_and_global_option_variants_require_approval(self):
+        commands = [
+            ["git", "commit", "-m", "ajuste"], ["git", "push", "--force", "origin", "main"],
+            ["git", "pull"], ["git", "merge", "outra"], ["git", "rebase", "main"],
+            ["git", "reset", "--hard", "HEAD"], ["git", "restore", "."],
+            ["git", "clean", "-fd"], ["git", "branch", "-D", "antiga"],
+            ["git", "add", "."], ["git", "switch", "-c", "nova"],
+            ["git", "checkout", "--", "."], ["git", "fetch", "origin"],
+            ["git", "stash", "pop"], ["git", "config", "alias.publicar", "push"],
+            ["git", "-C", "outro", "push"], ["git", "-c", "alias.publicar=push", "publicar"],
+            ["git", "--git-dir", "outro/.git", "push"],
+        ]
+        for command in commands:
+            with self.subTest(command=command):
+                self.assertEqual(self.check(command)["decision"], "prompt")
+
+    def test_unmatched_forms_never_receive_an_allow_from_sdd(self):
+        # Esses casos dependem do sandbox e da autorizacao instrucional, nao
+        # sao prometidos como cobertos por prefixos que nao coincidem.
+        for command in (["git", "--git-dir=outro/.git", "push"],
+                        ["git", "alias-particular"], ["bash", "-lc", "git status && git push"]):
+            with self.subTest(command=command):
+                self.assertNotEqual(self.check(command).get("decision"), "allow")
+
+    def test_sdd_prompt_and_more_restrictive_custom_rules_take_precedence(self):
+        with tempfile.TemporaryDirectory(prefix="sdd-rules-") as directory:
+            extra = Path(directory) / "pessoal.rules"
+            extra.write_text('prefix_rule(pattern=["git"], decision="allow")\n', encoding="utf-8")
+            self.assertEqual(self.check(["git", "push"], extra)["decision"], "prompt")
+            extra.write_text('prefix_rule(pattern=["git", "push"], decision="forbidden")\n', encoding="utf-8")
+            self.assertEqual(self.check(["git", "push"], extra)["decision"], "forbidden")
+
+
 class ReleaseTests(unittest.TestCase):
     def test_zipapp_installs_and_updates_outside_checkout(self):
         with tempfile.TemporaryDirectory(prefix="sdd-release-") as directory:
@@ -894,6 +1050,8 @@ class ReleaseTests(unittest.TestCase):
             result = subprocess.run([sys.executable, str(app), "update", str(root), "--json"], check=True, **options)
             self.assertEqual(json.loads(result.stdout)["changed"], [])
             self.assertTrue((root / "docs/padroes/PRD.md").is_file())
+            self.assertEqual((root / GIT_RULES).read_bytes(),
+                             bundle()["integrations/codex/sdd-git.rules"])
             self.assertTrue((root / GOVERNOR).is_file())
             self.assertFalse((root / LEGACY_GOVERNOR).exists())
             self.assertFalse((root / "specs").exists())
