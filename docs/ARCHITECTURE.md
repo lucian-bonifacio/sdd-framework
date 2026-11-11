@@ -14,7 +14,7 @@ o runtime anterior e substitui a governança de fases pela [ADR-003](decisions/A
 - `storage.py`: caminhos seguros, lock, escrita e remoção com rollback.
 - `changes.py`: diferenças por item/dependência e leitura do registro legado.
 - `execution.py`: referências instaladas/aplicadas, delta consolidado e escolha da operação.
-- `assets/governador.md`: único procedimento dirigido à IA, sem seção de aplicação.
+- `assets/governador.md`: fonte do procedimento instalado em docs/governador.md, sem seção de aplicação.
 - `assets/templates/` e `assets/standards/`: padrões canônicos.
 - `assets/skill/`: uma skill; Codex recebe política de invocação explícita e Claude recebe o campo nativo equivalente.
 
@@ -27,18 +27,56 @@ execution_hash protege a projeção installed de .sdd/execucao.json; campos da I
 permanecem editáveis. O antigo updates_hash é validado somente na migração do log.
 Não contém fase, aprovação, plano, tarefas ou estado do produto. Update verifica
 todos os conflitos antes de alterar arquivos e preserva bytes externos aos blocos.
-governador.md contém instruções; trabalho particular fica nos tickets, decisões
+docs/governador.md contém instruções; trabalho particular fica nos tickets, decisões
 nas ADRs e passagem no checkpoint. Update preserva conteúdo externo ao bloco.
 O procedimento é organizado por artefato, começando por PRD e SPECs. Estados por
 escopo ficam em .sdd/execucao.json e não são gates de implementação;
 a operação localiza fontes e constrói o objeto pelo padrão, existam ou não
-documentos anteriores. No PRD, pronto/pendente é determinado pelo critério de pronto;
-reexecução trata apenas operações alteradas e impactos diretos.
+documentos anteriores. Todos os itens definem objetivo, objeto de saída, insumos,
+padrões, execução específica e critério de pronto. A introdução concentra a
+conferência das exigências, conclusão e reexecução; os itens não repetem estados
+ou registros de resultado. São oito itens: Arquitetura obrigatória e Design
+separado, único opcional e recomendado. SPEC define comportamento e aceitação
+independentemente de solução técnica; Design, se adotado, fica inline ou em
+DESIGN.md, com design: inline/separate. Sem adoção, design: none não bloqueia
+SPEC, Tasks nem encerramento. Tasks prepara tickets;
+ROADMAP resume os próprios tickets; encerramento cobre o escopo documental pedido,
+sem exigir implementação do produto. Reexecução trata apenas operações alteradas
+e impactos diretos. Métodos separados de Tasks e ROADMAP têm fragmentos próprios
+em SDD:USES para detectar mudanças específicas sem invalidar ambos por rotina.
+Arquitetura conserva seu ID e histórico de aplicação; Design recebe ID próprio e
+registro sem conclusão automática. Templates e métodos têm associações separadas.
+A CLI mantém o controle binário; a opcionalidade é instrução do governador/skill,
+sem novo estado técnico de dispensa ou migração automática de documentos particulares.
 
 A migração do formato 1 remove apenas recursos administrados com hash confirmado.
 O bloco antigo de docs/FLUXO é substituído por aviso de desativação; o conteúdo
 próprio permanece para migração explícita pela IA. Outros documentos, scripts e
 configurações legados não são excluídos automaticamente em consumidores.
+
+## Especificidade dos documentos e instruções locais
+O padrão de conteúdo vem dos doze templates e dos métodos em CONTRATOS. A regra
+comum do governador exige ações/regras, referências e verificação com parâmetros
+reais; a skill confere lacunas e registra pendências sem inventar dados. AGENTS
+concentra regras permanentes de escopo, testes, higiene, qualidade, proteção e
+entrega; cada ticket contém plano de verificação e limpeza próprio, referenciando
+AGENTS. Dependências entre a preparação de Tasks e as instruções locais são
+resolvidas pelo conteúdo real, sem copiar regras ou exigir implementação.
+A CLI não valida semanticamente comandos nem executa testes ou limpeza no
+consumidor. Update distribui as instruções, preservando documentos particulares;
+a aplicação do conteúdo exige acionamento explícito da IA. Limpeza delimitada
+preserva testes permanentes, fixtures, evidências e arquivos anteriores.
+
+## Localização e migração do governador
+O governador é instalado em docs/governador.md; sua fonte na distribuição continua
+assets/governador.md, identificada separadamente por GOVERNOR_TEMPLATE. O update
+aceita o bloco antigo registrado em governador.md, valida seu hash e a ausência
+de conflito no destino, move o conteúdo próprio junto ao bloco e registra somente
+o novo caminho no manifesto. Caminho antigo sem procedência não é removido.
+Arquivo antigo alterado/ausente, destino ocupado ou symlink abortam antes de escrever;
+falha de escrita/remoção usa o rollback existente. Referências instaladas/aplicadas
+e evidências permanecem no controle técnico. Links Markdown do novo governador são
+relativos a docs/; caminhos textuais e SDD:USES continuam relativos à raiz do projeto.
 
 ## Restrições e segurança
 Não seguir symlinks nos artefatos ou no bundle. Não executar scripts da fonte.
@@ -77,3 +115,22 @@ conclusões semânticas ou impede toda edição livre da IA.
 A regra geral fica no governador, sem repetição por item; a skill explica leitura,
 registro e critérios. Mudança comum exige avaliar impacto direto, sem invalidar
 tudo. Presença de hash/arquivo não comprova critério; não há chamada automática a LLM.
+
+## Portabilidade de texto — T-002
+Texto do framework é UTF-8; testes usam encoding e newline explícitos e o checkout
+mantém LF por .gitattributes. Recursos de consumidores continuam aceitando CRLF:
+a integração Claude preserva o final de linha da skill e o parser do log legado
+reconhece CRLF sem normalizar os bytes protegidos pelo hash. Testes de regressão
+cobrem ambos os casos. A correção foi verificada localmente e sob simulação
+cp1252/CRLF; correção isolada 5e4f530 passou na CI Windows 3.11/3.14, além de Ubuntu/macOS,
+conforme T-002. Essa evidência não certifica as demais mudanças locais.
+
+## Ordem de execução das tasks — T-016
+Priority e dependencies são metadados YAML dos tickets, fonte única de ordem e
+vínculos. Menor inteiro positivo tem maior prioridade, com padrão 100 e desempate
+pelo caminho completo; IDs/data de criação não definem prioridade. Autorização,
+dependências e impedimentos determinam se a task pode executar, sem interrupção
+por rotina do trabalho ativo. ROADMAP projeta fila e encerradas em tabelas; não há
+JSON paralelo ou armazenamento de backlog em .sdd/execucao.json. A IA mantém a
+projeção e seus vínculos; a CLI distribui o padrão sem interpretar ou executar tasks.
+Histórico narrativo removido do ROADMAP foi preservado com origem em T-016.

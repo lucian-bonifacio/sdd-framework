@@ -2,27 +2,27 @@
   "schema_version": 2,
   "version": "0.4.2",
   "files": {
-    "docs/padroes/README.md": "e214d871bc65c6a89a3f84e762958b8dd73f24a675631b466e8542c28b0945c3",
-    "docs/padroes/AGENTS.md": "d0048a0eafebc4421f45078007c6fda2384dd1e6b30c606ba7e7d438dfd6241b",
-    "docs/padroes/PRD.md": "f335028c0ed357a09ff45235f1306c3a5ddbffd235d6daa09db38ca03b5a9882",
-    "docs/padroes/ARCHITECTURE.md": "6279b470c67042fc94afba03e468bfdbe03d538a9b713e9f4e0d136182f58805",
-    "docs/padroes/ROADMAP.md": "402964829aca75b40e513cb2eebf18c710941d7055506539289086ef67ad72c7",
-    "docs/padroes/SPEC.md": "db34c550490b9c4b56938fbcada10f64dabbcae859cd1d9fd8eeefa9ef81ffb6",
-    "docs/padroes/DESIGN.md": "6eff276dd38bfa407478030887ef57a2d223beff8cbf4a2c7671bed67501216b",
-    "docs/padroes/TASK.md": "50b9f7af24e1c72cc9e4719fdb20fbdc0d7e0e012ff8c00a7f6438f9621237b8",
-    "docs/padroes/ADR.md": "7543156f5f209198e29d2aed19b11fbb2c31cf705329d42860672894975e645a",
-    "docs/padroes/INBOX.md": "b311fcc752e48178469f8958211d86b73d554849daef294bec92118c7b13d84c",
-    "docs/padroes/CHECKPOINT.md": "b7c53dec12dff6151a939c56ce1c8cb52d1a6df03c4bd69f5fea6f9fa0cbde7d",
-    "docs/padroes/VALIDATION.md": "3edd84beba9820e2052929b13f31bf159180796beb747d23a02e0c544166caae",
-    "docs/padroes/CONTRATOS.md": "e5676cef27d9d9b13816d74c6e6e937b448b61d38b91f99877ebb28f9a820d39",
-    ".agents/skills/sdd/SKILL.md": "7e994f53c7b6e4b1c1ef15fd4ec9f7dd99f42db230c76b8930e064338e6a00a2",
+    "docs/padroes/README.md": "947381291407e82673082f5273814cefeefff5a6ef9bfab907c7d21f7ef06a0f",
+    "docs/padroes/AGENTS.md": "23a7e3b96bf32f260cf059a5f2cc41105f884c648048839a7c6983d545cf27d6",
+    "docs/padroes/PRD.md": "27d25ca47c3d788ea01f3446723870a5a969e99bde0472786cc6439c58dae687",
+    "docs/padroes/ARCHITECTURE.md": "5e0bb06be0140f8ff4f9dade5f4991534769874533c74e311c1baea4d1221255",
+    "docs/padroes/ROADMAP.md": "3552e60dd2815e42552e7b5fae653ce1afd9f5d056b2550d9bf84386b5448ed5",
+    "docs/padroes/SPEC.md": "090e3e9a42264edc361e0da4588643afad6e93a26b50567cb9c5f6d7d8b78571",
+    "docs/padroes/DESIGN.md": "78015c78d260a2afe8976c3ad8101700d502aa863ef9bcbc789981e73301b2e5",
+    "docs/padroes/TASK.md": "fd114c294458e576d48d6c1c8e3e2a1e7f4f83a6c1a39f584ac896ed06c92420",
+    "docs/padroes/ADR.md": "103297055898bb911fc7484f6023497b32d0c74d77c308f16496dbb819619f6c",
+    "docs/padroes/INBOX.md": "d27e190c730bc7fb0eeb4c2707ec65baefe2db560828c97b0cd0cb2ef03eb626",
+    "docs/padroes/CHECKPOINT.md": "d4b18ca18be88687a8448dbe83e26d3ff24589bdaa49a2f4b3d2d153fe47412e",
+    "docs/padroes/VALIDATION.md": "791685f0d88352498fe8804d49a3472fb2ede4849bed12b5b8f70c102fc9c754",
+    "docs/padroes/CONTRATOS.md": "adfd1fc824d895efc5b319c76eae1632f69d205b8ebae1f6a1fe19e05fc97b1f",
+    ".agents/skills/sdd/SKILL.md": "67a30818fc2e2cb9f08e390caad610c2bbb2154cb06a14eeb901769acccf6d14",
     ".agents/skills/sdd/agents/openai.yaml": "a1499d95abd8447558c535fe5554adcc3c9b988a0a39264a6283d430effe1e94",
-    ".claude/skills/sdd/SKILL.md": "bcfa839d15cb7a6a106233612fb9a4d7408e4306faac039c3a3bd892cb1d7ea5"
+    ".claude/skills/sdd/SKILL.md": "16d14b2682bda9de7e146e7b7adb8dcf18fe840d5bc1f15845e4a9eb73ad755b"
   },
   "blocks": {
-    "AGENTS.md": "41630a64855cf3581badd3245a24098b5487e71539b04cc148d3ab5db7813ca0",
-    "CLAUDE.md": "a77b1b75d9c86bdc896ed079211282e2ab434440aa78410326a587a24b464a6a",
-    "governador.md": "b80ea5790dd2af365c10671dd4bf012965e5ee5b15bd5e1c766ddd6a17db329f"
+    "AGENTS.md": "0da5e0c48abc5897dd486a0e4eea7935cc560b6dbc6781aaa9a7442d8e7fac7b",
+    "CLAUDE.md": "e62a1932f76932c6b5075a07448f30c07cfa639d6314528bec4601695a7700c7",
+    "docs/governador.md": "75eeb2f351e8498ad1f538cd7b2746eb409e34f01143f562b382245da1ecbb52"
   },
-  "execution_hash": "c5223ebd7ef32e2a0d19bc7a41c6f6cdfdeab5cee6f94ca2f04990aa19c9cc16"
+  "execution_hash": "fde8bafe7e725c2a3cf466910f98b61e7e660ce08b1bd5e0b4babd1fb773f012"
 }

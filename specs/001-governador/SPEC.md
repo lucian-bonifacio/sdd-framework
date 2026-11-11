@@ -7,7 +7,7 @@ design: inline
 
 ## Objetivo e escopo
 Substituir a arquitetura 0.1 por governador, padrões e uma skill, conforme
-[PRD](../../docs/PRD.md) RF-001 a RF-011. Reformulação direta autorizada pelo
+[PRD](../../docs/PRD.md) RF-001 a RF-015. Reformulação direta autorizada pelo
 mantenedor em 2026-11-10; não preservar mecanismos que perderam a função.
 
 ## Requisitos
@@ -19,13 +19,23 @@ mantenedor em 2026-11-10; não preservar mecanismos que perderam a função.
 - RF-006: Migração 0.1 remove somente recursos administrados intactos e desativa o procedimento antigo, preservando plano/configuração/tickets particulares para migração pela IA.
 - RF-007: CLI expõe só init/update, com JSON, lock e rollback; zipapp funciona sem checkout/dependências.
 - RF-008: Aplicar a reformulação neste repositório e retirar a documentação/código de controles antigos. Preservar decisões atuais e adiamentos reais.
-- RF-009: Investigar CI Windows somente após piloto e autorização específica, sem presumir sucesso remoto.
-- RF-010: Organizar o governador por artefato, começando por PRD e SPECs. Em cada operação, localizar fontes e construir o objeto pelo template, aproveitando conteúdo quando houver, sem separar projetos novos/existentes. No PRD, manter objetivo, objeto de saída, insumos, operação e critério de pronto; execução/reexecução seguem orientação geral única; retirar classificação de situações e resultado separado. Reexecução trata só operações alteradas/impactos diretos. Usar padrões próprios e preservar registros particulares, sem gates de fases.
+- RF-009: Investigar CI Windows por autorização específica do mantenedor, agora concedida após T-015 independentemente do piloto; sem presumir sucesso remoto.
+- RF-010: Organizar o governador por artefato, começando por PRD e SPECs. Em cada operação, localizar fontes e construir o objeto pelo template, aproveitando conteúdo quando houver, sem separar projetos novos/existentes. Todos os itens mantêm objetivo, objeto de saída/caminho, requisitos e insumos, padrões, operações específicas e critério de pronto; execução/reexecução seguem orientação geral única, sem classificação de situações ou resultado separado. Explicitar dependências reais e documentos condicionais, sem exigir implementação para concluir organização. Reexecução trata só operações alteradas/impactos diretos. Usar padrões próprios e preservar registros particulares, sem gates de fases.
 
 - RF-011: Detectar diferenças por ID/dependências e guardar em .sdd/execucao.json apenas referências limitadas e pendências consolidadas. O update mantém installed; a IA mantém applied, completed, evidence e remaining, sem concluir por instalação. Dois updates comparam desde applied até o padrão atual, sem cadeia de eventos.
 - RF-012: Centralizar roteamento no governador e operacionalização na skill; a conclusão tem apenas duas situações, determinadas pelo critério de pronto. Antes da conclusão, executar só condições não atendidas; depois, reexecutar apenas mudanças do framework. Preservar estado/evidências, recusar controle ausente/corrompido e proteger installed pelo manifesto; copiar referência para applied somente após critérios cumpridos. Migrar log antigo intacto para legacy_pending e exigir reconciliação única sem fabricar conclusão.
 
+- RF-013: Separar os itens Arquitetura (obrigatório) e Design (opcional e recomendado), preservando o ID arquitetura e adicionando design sem transferir conclusão. Aceitar design: none, inline ou separate; ausência de Design não bloqueia SPEC, Tasks ou encerramento, nem autoriza apagar solução existente. Manter os demais sete itens obrigatórios no fluxo completo, com registros auxiliares condicionais.
+
+- RF-014: Operacionalizar PRD RF-013 nos doze templates, regra geral de especificidade, itens Tasks e AGENTS/README, métodos e skill. Separar regras permanentes em AGENTS de planos concretos nos tickets; não fabricar comandos ou resultados. Orientar testes proporcionais e verificações obrigatórias, limpeza delimitada de recursos próprios e preservação de testes permanentes/evidências. CLI continua responsável apenas por distribuição e controle técnico.
+
+- RF-015: Instalar o governador em docs/governador.md e migrar o caminho antigo registrado na raiz por update, validando procedência e hashes, recusando conflito no destino e preservando conteúdo particular, controle de execução e rollback. Atualizar referências e links sem executar o governador; arquivo antigo sem procedência permanece particular.
+
+- RF-016: Organizar ROADMAP como fila de tasks e encerradas a partir de priority/dependencies dos tickets. Priority é inteiro positivo padrão 100, menor primeiro; empate usa caminho completo. Fonte única em YAML dos tickets, sem JSON paralelo; prioridade pode antecipar task criada depois sem ignorar autorização ou impedimentos. Distribuir padrão e preservar histórico retirado nos registros pertinentes.
+
 ## Critérios de aceitação
+- CA-016: Template ROADMAP contém fila, encerradas e ações humanas, sem Prioridades e dependências. TASK define priority positivo padrão 100 e dependencies; métodos, AGENTS, skill e governador usam menor priority e desempate por caminho sem ignorar autorização/impedimentos. Conteúdo histórico retirado do ROADMAP local é preservado com origem; nenhuma fonte paralela de planejamento é criada. Update distribui o novo padrão e preserva documentos particulares e aplicação.
+- CA-014: Todos os documentos produzidos exigem parâmetros e referências reais, sem recomendações vagas ou marcadores. Template AGENTS cobre contexto/escopo, comandos/verificações, higiene, qualidade, proteção e entrega. Template TASK exige plano por critério de aceitação com cenário, procedimento/comando, diretório, pré-requisitos, esperado e evidência, além de limpeza de recursos próprios. Governador impede conclusão com essas exigências faltantes; templates, métodos e skill são distribuídos por update, sem produzir documentos nem executar testes do consumidor. Testes permanentes, fixtures úteis, evidências e trabalho anterior são preservados.
 - CA-010: Update identifica itens por ID estável e detecta mudança isolada de instrução, template ou método. Diferenças ficam no controle técnico, fora do governador. Inclusão/remoção não apaga documentos do produto; ordem é mudança comum.
 - CA-011: Updates sucessivos consolidam o delta desde o padrão aplicado e preservam estado/evidências. Reversão elimina diferença, mudança só de versão não exige reexecução e update idempotente não modifica recursos. Conclusão pela IA elimina delta; ausência de registro não fabrica primeira execução/conclusão.
 - CA-012: Critério de pronto determina concluído/não concluído; condições atendidas são preservadas. Depois de concluído, alteração encaminha à reexecução e referências iguais à preservação. Estados antigos são convertidos sem perder evidências ou condições pendentes. Controle ausente/inválido, installed modificado ou conclusão sem evidência abortam antes de escrever. Log antigo íntegro migra uma única vez; log adulterado impede a migração. Skill/regra geral preservam aplicação e limitam impacto.
@@ -36,8 +46,12 @@ mantenedor em 2026-11-10; não preservar mecanismos que perderam a função.
 - CA-005: Testes demonstram symlinks recusados, rollback de escrita/remoção, bloqueio concorrente e execução do zipapp fora do checkout.
 - CA-006: Governador dirige ações à IA com linguagem legível; cobre os padrões e separa encerramento documental de implementação do produto.
 - CA-007: Este repositório usa o novo governador; documentação vigente não depende de fases, CLI check, TASKS ou tickets de adoção.
-- CA-008: Windows permanece pendência explícita até execução e evidências reais após o piloto.
-- CA-009: Primeira etapa é PRD, segunda SPECs; inventário e verificações pertencem ao artefato correspondente. Todos os escopos têm objetivo, estado, apoio, condicionais e conclusão. O PRD define o objeto e os insumos necessários; somente o critério de pronto determina pendência ou conclusão. A operação é unificada, e a reexecução trata só operações alteradas/impactos diretos. Update preserva estados particulares; o governador e os recursos distribuídos não remetem a templates/skills externos como orientação de execução; padrões e métodos são próprios do SDD Framework.
+- CA-008: Windows permanece pendência explícita até execução e evidências reais da correção autorizada, sem usar testes Linux como aprovação Windows.
+- CA-009: Primeiro item é PRD, segundo SPECs; inventário e verificações pertencem ao artefato correspondente. Todos os oito itens definem objetivo, objeto de saída/caminho, requisitos e insumos, padrões próprios, execução específica e critério de pronto. Não há seção separada de estado ou resultado; somente as exigências do critério de pronto determinam pendência ou conclusão. Arquitetura é obrigatória e Design é o único item opcional e recomendado; SPEC e Tasks não dependem de sua produção; preparação de tickets e encerramento documental não exigem produto implementado. A operação é unificada, e a reexecução trata só operações alteradas/impactos diretos. Update preserva estados particulares; o governador e os recursos distribuídos não remetem a templates/skills externos como orientação de execução; padrões e métodos são próprios do SDD Framework.
+
+- CA-013: Governador tem oito itens com seções próprias para Arquitetura e Design. Template SPEC permite design: none sem solução fictícia. Metadados associam templates/métodos aos itens separados; alteração no template DESIGN afeta somente Design. Update preserva aplicação anterior de arquitetura e conhecimento particular, adiciona Design sem conclusão inventada e permanece idempotente. Regra geral e skill permitem encerrar o fluxo com os sete itens obrigatórios atendidos, mesmo sem Design adotado.
+
+- CA-015: Init instala docs/governador.md e não cria governador na raiz. Update de instalação antiga move o bloco e conteúdo próprio, preserva campos da IA e legado, retira somente o caminho administrado antigo e é idempotente. Alteração/ausência do antigo, destino conflitante e symlinks abortam sem mutação; falha de remoção reverte a operação. Links Markdown resolvem a partir de docs/; zipapp funciona fora do checkout.
 
 ## Design técnico
 [Arquitetura](../../docs/ARCHITECTURE.md) e [ADR-003](../../docs/decisions/ADR-003.md).
@@ -61,4 +75,6 @@ legacy_pending e conserva evidências anteriores; ausência de conclusão não m
 Roteiro, decisões e exceções próprios ficam nos tickets, ADRs e checkpoint.
 
 ## Pendências
-Piloto no tax e CI Windows depois dele; sem publicação autorizada.
+Piloto no tax separado. T-002 concluída com evidência Windows real na branch
+isolada autorizada; resultado e limites no ticket. Merge/release e push das demais
+alterações locais não autorizados.

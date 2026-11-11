@@ -20,7 +20,7 @@ automaticamente, criar Design System, impor serviços de memória ou atualizar
 todos os projetos silenciosamente.
 
 ## Requisitos
-- RF-001: Instalar governador.md, padrões e integrações, preparando somente diretórios de apoio; não gerar documentos de produto fictícios.
+- RF-001: Instalar docs/governador.md, padrões e integrações, preparando somente diretórios de apoio; não gerar documentos de produto fictícios.
 - RF-002: Acionar a organização somente por pedido explícito do usuário ou invocação da skill; sessão, leitura e init/update não constituem acionamento.
 - RF-003: Dirigir as instruções à IA, com ações, condições, limites e critérios de conclusão; manter escrita clara, objetiva e revisável por humanos.
 - RF-004: Distribuir padrões de README, AGENTS, PRD, arquitetura, roadmap, SPEC, design, tickets, decisões, propostas, evidências e checkpoint.
@@ -28,9 +28,13 @@ todos os projetos silenciosamente.
 - RF-006: Manter governador somente como instrução, sem seção de aplicação particular; registrar ações/resultados nos tickets, decisões nas ADRs e passagem no CHECKPOINT; manter referências, evidências e pendências técnicas em .sdd/execucao.json. Depois, executar tarefas locais sem dependência operacional da CLI/skill ou repetição da organização.
 - RF-007: Atualizar somente recursos e trechos administrados, preservando documentos próprios, aplicação do governador e configuração existente. Update não executa organização; nova avaliação exige acionamento.
 - RF-008: Entregar apenas init/update, runtime Python stdlib e pacote portátil. Manter uma skill genérica em ambas as integrações; sem fases, tickets de adoção ou índices obrigatórios criados pela CLI.
-- RF-009: Iniciar o governador por PRD e depois SPECs, com mapa por artefato, objeto de saída, requisitos, padrão, operação e critério de pronto. A operação é unificada pela existência de documentos e informação, sem separar projetos novos/existentes. No PRD, pendência e conclusão são determinadas somente pelo critério de pronto, sem classificação de situações ou seção separada de resultado. Preservar aplicação e usar somente padrões/métodos próprios do SDD Framework.
+- RF-009: Iniciar o governador por PRD e depois SPECs. Cada item define objetivo, objeto de saída/caminho, requisitos e insumos, padrão próprio, operações específicas e critério de pronto. A operação é unificada pela existência de documentos e informação, sem separar projetos novos/existentes. Em todos os itens, pendência e conclusão são determinadas somente pelas exigências do critério de pronto, sem classificação de situações ou seção separada de resultado. Preservar aplicação e usar somente padrões/métodos próprios do SDD Framework.
 - RF-010: Detectar automaticamente alterações por item e recursos associados, sem revisão manual por item. Manter controle em .sdd/execucao.json com hashes e referências instaladas/aplicadas, evidências, pendências e diferenças consolidadas. Não acumular histórico no governador; preservar registros antigos uma única vez para reconciliação. No acionamento explícito, informar mudanças e executar somente operações afetadas/impactos diretos; update nunca registra conclusão pela IA.
 - RF-011: Centralizar execução, retomada e reexecução em orientação geral, sem repetir a mecânica nos itens. Determinar conclusão exclusivamente pelo critério de pronto: concluído ou não concluído. Tratar somente condições não atendidas; depois da conclusão, reexecutar apenas mudanças do framework e impactos diretos. A skill registra referência aplicada apenas após critérios cumpridos; migração preserva informações e condições atendidas, sem criar estados intermediários ou reconstrução automática. A introdução define quando agir; Execução do PRD define como atender aos critérios, sem obrigar reconstrução integral.
+- RF-012: Separar Arquitetura e Design em itens próprios. Arquitetura é obrigatória; Design é o único item opcional do fluxo e é recomendado. Sem Design, SPEC, Tasks e encerramento continuam; não exigir solução inline ou arquivo separado nem fabricar conclusão. Os demais sete itens são obrigatórios no fluxo completo, respeitando pedidos de escopo restrito e registros auxiliares condicionais. Preservar conhecimento e aplicação anterior na atualização.
+- RF-013: Exigir conteúdo específico e verificável em todos os documentos produzidos, sem slogans ou marcadores; informação indispensável ausente é pendência, sem inventar parâmetros do consumidor. AGENTS define contexto/escopo, verificações, higiene, qualidade, proteção e entrega com regras permanentes e parâmetros locais. Tasks referenciam AGENTS e definem cenários, comandos/procedimentos, diretórios, pré-requisitos, resultados esperados, evidências e limpeza próprios. Preservar testes permanentes, fixtures, evidências e alterações particulares; limitar a limpeza a descartáveis e recursos da execução. Instalação continua sem produzir esses documentos nem executá-los.
+- RF-014: Localizar o governador em docs/governador.md por padrão. Update migra o procedimento administrado antigo da raiz, preservando conteúdo particular e registros, recusando arquivos alterados/ausentes, conflito no destino e symlinks, com rollback. Atualizar referências para o novo caminho sem executar a organização.
+- RF-015: ROADMAP organiza tasks em fila objetiva e tabela de encerradas, sem seção narrativa de Prioridades e dependências ou diário de versões. Priority e dependencies têm fonte única nos tickets; menor inteiro positivo executa primeiro, padrão 100 e desempate pelo caminho completo. Task criada depois pode ter prioridade maior, sem ignorar autorização, dependências e impedimentos. Preservar conhecimento retirado nos registros pertinentes; não adicionar JSON paralelo nem usar o controle do framework para planejar produto.
 - RNF-001: Recusar conflitos e symlinks antes de escrever; proteger contra escritores concorrentes e reverter falhas ordinárias de escrita/remoção.
 - RNF-002: Não apagar conhecimento essencial, inventar aprovação/evidência ou alterar configurações globais.
 - RNF-003: Documentos permanecem legíveis e utilizáveis independentemente do pacote.
@@ -42,5 +46,23 @@ sem obrigação de compatibilidade com a versão inicial. A última orientação
 que o governador instrui a IA e deve ser legível para revisão humana.
 
 [ADR-003](decisions/ADR-003.md) registra a decisão. Piloto no tax permanece sob
-condução do mantenedor; CI Windows depois do piloto. Publicação, licença e
+condução do mantenedor; investigação da CI Windows autorizada especificamente
+após T-015, independentemente do piloto. Publicação, licença e
 integração de memória não são autorizadas por esta implementação.
+
+Separação de Arquitetura obrigatória e Design opcional/recomendado autorizada
+explicitamente pelo mantenedor e registrada em T-013. Impacto: oito itens,
+metadado design: none/inline/separate, dependências, templates, métodos, skill e
+detecção de mudanças; sem execução do governador ou migração semântica automática.
+
+Instruções concretas para AGENTS, planos de verificação/limpeza nos tickets e
+especificidade em todos os documentos autorizados pelo mantenedor em T-014.
+Impacto em todos os templates, métodos, regra geral, itens Tasks/AGENTS e skill;
+sem executar testes ou limpeza do consumidor pela CLI e sem inventar seus dados.
+
+Mudança do governador para docs/governador.md autorizada pelo mantenedor em T-015,
+com impacto na CLI, migração, links, instruções instaladas e distribuição portátil.
+
+Reorganização do ROADMAP autorizada em T-016 após T-015 e T-002, com prioridade de
+execução independente da criação. Fonte única nos tickets (priority/dependencies),
+sem novo JSON; impacto em templates, métodos, AGENTS, skill e governador.

@@ -2,7 +2,7 @@
 
 Este arquivo é uma bibliografia de desenvolvimento do mantenedor, não distribuída
 aos consumidores nem consultada pela IA para executar o governador. O procedimento
-vigente é governador.md; padrões e métodos são próprios do SDD Framework e vêm de
+vigente é docs/governador.md; padrões e métodos são próprios do SDD Framework e vêm de
 src/sdd_framework/assets. Links abaixo registram origem de inspiração e consultas
 técnicas; não são templates, skills ou procedimentos do projeto.
 

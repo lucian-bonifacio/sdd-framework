@@ -15,8 +15,8 @@ LEGACY_IDS = {"prd": "prd", "specs": "specs", "arquitetura-e-design": "arquitetu
 
 
 def log_section(text: str) -> str | None:
-    starts = list(re.finditer(r"^" + re.escape(LOG_START) + r"[ \t]*$", text, re.M))
-    ends = list(re.finditer(r"^" + re.escape(LOG_END) + r"[ \t]*$", text, re.M))
+    starts = list(re.finditer(r"^" + re.escape(LOG_START) + r"[ \t]*(?=\r?$)", text, re.M))
+    ends = list(re.finditer(r"^" + re.escape(LOG_END) + r"[ \t]*(?=\r?$)", text, re.M))
     if not starts and not ends:
         return None
     if len(starts) != 1 or len(ends) != 1 or ends[0].start() < starts[0].end():

@@ -11,15 +11,26 @@ e detalhe proporcional. Use tabelas para comparar/mapeamentos e listas para aç�
 ou itens paralelos. Não duplique o procedimento, estados ou decisões em vários
 arquivos. Preserve conteúdo essencial e permita seções adicionais compatíveis.
 
+Todo documento produzido deve identificar concretamente o objeto, a ação ou regra,
+as referências pertinentes e como verificar o cumprimento, conforme sua função.
+Substitua slogans como "seguir boas práticas", "testar o necessário" e "limpar
+temporários" por regras, cenários, comandos/procedimentos e alvos reais do projeto.
+Não invente comandos, caminhos, metas, stack ou aprovação para preencher seções:
+informação indispensável ausente é pendência com ação necessária. Orientações de
+preenchimento e marcadores pertencem aos templates; retire-os do documento entregue.
+Regras permanentes aplicáveis podem ser preservadas, mas precisam das referências
+e parâmetros locais necessários à execução. Ausência ou não aplicabilidade deve
+ser explícita e justificada quando permitida, sem criar documento condicional vazio.
+
 | Documento | Função e padrão |
 |---|---|
 | README.md | Objetivo e uso real; template README.md |
 | AGENTS.md | Contexto, comandos, convenções e acionamento explícito; template AGENTS.md |
 | docs/PRD.md | Contrato geral do produto; template PRD.md |
 | docs/ARCHITECTURE.md | Componentes, contratos e restrições; template ARCHITECTURE.md |
-| docs/ROADMAP.md | Entregas, prioridades e resumo dos tickets; template ROADMAP.md |
+| docs/ROADMAP.md | Fila objetiva de tasks por prioridade e resumo dos tickets; template ROADMAP.md |
 | specs/NNN-nome/SPEC.md | Contrato de uma entrega; template SPEC.md |
-| specs/NNN-nome/DESIGN.md | Design separado quando necessário; template DESIGN.md |
+| specs/NNN-nome/DESIGN.md | Design opcional e recomendado; template DESIGN.md |
 | specs/NNN-nome/tasks/T-NNN.md | Tarefa, estado e evidências; template TASK.md |
 | docs/decisions/ADR-NNN.md | Decisão transversal real; template ADR.md |
 | docs/inbox/ITEM-NNN.md | Proposta ainda não aceita; template INBOX.md |
@@ -37,9 +48,16 @@ na notação JSON. Os templates exemplificam o formato; não há parser de fases
 - Documentos com status: draft, accepted ou superseded. Accepted registra uma
   decisão real; seções preenchidas não fabricam aprovação.
 - Requisitos: RF-NNN/RNF-NNN no PRD e, com escopo local, na SPEC; critérios CA-NNN.
-- SPEC: id igual à pasta NNN-nome; design inline ou separate.
+- SPEC: id igual à pasta NNN-nome; design none (não adotado), inline ou separate.
+  Design é o único item opcional e é recomendado; Arquitetura é obrigatória.
 - Ticket: ID T-NNN único na entrega; identidade completa é seu caminho relativo.
-  Dependências e requisitos devem apontar a itens existentes.
+  Dependências e requisitos devem apontar a itens existentes. Priority é inteiro
+  positivo, padrão 100; menor número representa maior prioridade de execução.
+  Dependencies registra dependências técnicas reais; não usar prioridade como
+  dependência nem inferir ordem pelo ID/data de criação. Ao adequar tickets antigos,
+  preservar prioridade existente; usar 100 somente quando não houver prioridade
+  definida. Reconhecer o alias legado depends_on sem perder seus vínculos; escrever
+  dependencies como campo canônico.
 - Ticket status: pending, ready, in_progress, awaiting_user, blocked, done ou cancelled.
   Executor: agent, user ou joint. Authorization: pending ou approved.
   Verification: not_verified, passed, failed ou not_applicable.
@@ -55,9 +73,34 @@ o trabalho; done exige critérios cumpridos, evidência real, passed ou not_appl
 justificado e nenhuma ação humana obrigatória pendente. Cancelar exige motivo e
 não satisfaz uma dependência. Não fabrique aceite, resultado ou autorização.
 
+Antes de executar, confira o plano de verificação do ticket e as regras permanentes
+de AGENTS. Durante a execução, use testes proporcionais à mudança; antes de done,
+cumpra as verificações obrigatórias do projeto e os critérios do ticket. Crie ou
+ajuste testes permanentes quando necessários para demonstrar comportamento ou
+evitar regressões. Resultado anterior só vale enquanto código, entradas e ambiente
+pertinentes forem válidos; amplie ou repita por mudança, falha ou lacuna concreta.
+Teste não aplicável exige justificativa e revisão alternativa; teste obrigatório
+não executado é pendência, não passed ou not_applicable.
+
+Registre no resultado os comandos/procedimentos executados, resultado observado,
+evidência, limitações e limpeza. Remova apenas descartáveis da própria execução
+nos alvos previstos e encerre seus processos/serviços quando dispensáveis. Preserve
+testes permanentes, fixtures úteis, evidências e arquivos anteriores ou de origem
+desconhecida; Git sem rastreio não autoriza exclusão. Recursos ainda necessários
+devem ter destino ou próxima ação explícitos. Não limpe arquivos particulares para
+simular repositório sem alterações nem descarte a única evidência de uma falha.
+
+Selecione a próxima task entre as autorizadas, com dependências concluídas e sem
+impedimento, pela menor priority; empate usa caminho completo do ticket. Alterar
+priority pode colocar uma task criada depois na frente das anteriores. Não execute
+blocked/awaiting_user, não interrompa trabalho ativo por rotina e não fabrique
+aprovação, conclusão ou dependência para satisfazer a ordem. Trabalhos independentes
+continuam podendo ser executados no escopo autorizado.
+
 Em awaiting_user, explique a ação concreta necessária. Em blocked, registre causa
 e desbloqueio. Continue tarefas independentes autorizadas. Ao alterar tickets,
-reflita o resumo no ROADMAP, com links, estado, executor/verificação e ações humanas;
+reflita a fila no ROADMAP, com prioridade, dependências/impedimentos, links, estado,
+executor/verificação e ações humanas;
 não é obrigatório um script ou pacote do framework.
 
 A execução não depende de o projeto ser novo ou existente: localizar fontes,
@@ -81,38 +124,106 @@ Transforme problema e resultado esperado em requisitos observáveis. Use o templ
 PRD próprio, com detalhe proporcional e sem confundir hipótese com decisão.
 Localize fontes do produto, existam ou não documentos anteriores, e construa o PRD
 pelo padrão incorporando o conteúdo útil. A existência de documento não cria um
-procedimento diferente nem dispensa a reconstrução na execução.
-
-Considere a tarefa resolvida somente pelo critério de pronto do item. Se houver
-pendência, indique condição não atendida e ação necessária; se pronto, indique a
-evidência no PRD. Na reexecução, execute apenas operações alteradas e os ajustes
-necessários aos critérios afetados, sem revisar ou refazer pontos intactos.
+procedimento diferente: aproveite o conteúdo válido sem adotar o formato anterior
+como padrão alternativo.
 
 ### SPEC
-Delimite a entrega e associe cada obrigação a um critério verificável. Inclua
-condições, resultado esperado, falhas e limites pertinentes. Separe comportamento
-e solução; preserve IDs. Refine a aceitação com cenários reais do projeto e com
-o template SPEC do SDD Framework.
+Delimite a entrega a partir do PRD e vincule requisitos locais aos requisitos do
+produto. Associe cada obrigação a critérios CA-NNN com contexto, ação e resultado
+observável, incluindo falhas e limites pertinentes. Preserve IDs e decisões de
+fontes anteriores ao incorporar o conteúdo no template SPEC. Separe comportamento
+e solução: a SPEC define o contrato de comportamento independentemente da adoção
+do Design. Use design: none quando não adotado, inline para solução na SPEC ou
+separate com link para DESIGN.md. Não exija solução técnica para concluir a SPEC
+nem fabrique aceite sobre o comportamento.
 
-### Arquitetura e design
-Explicite invariantes, interfaces, restrições e decisões suficientes para executar
-a SPEC. Reutilize soluções existentes e detalhe conforme a complexidade. Arquitetura
-descreve contratos; design local explica a solução da entrega. Não replique o código.
+### Arquitetura
+Construa obrigatoriamente docs/ARCHITECTURE.md pelo template ARCHITECTURE, com
+contratos, componentes, tecnologias justificadas, restrições e verificação do
+projeto. Aproveite invariantes, interfaces, decisões e configurações válidas;
+relacione os contratos ao PRD e às SPECs sem depender de Design. Registre decisões
+transversais reais pelo template ADR, com origem da aceitação. Se houver interface
+visual, identifique Design System e versão; se não houver referência disponível,
+trate a decisão necessária sem criá-lo implicitamente. Inclua preservação,
+compatibilidade e recuperação quando houver migração arquitetural. Planeje
+verificações reais, sem alegar execução nem replicar código como arquitetura.
+
+### Design
+Recomende o detalhamento técnico da entrega, único item opcional do fluxo. Quando
+adotado, use o conteúdo do template DESIGN inline na SPEC ou em DESIGN.md, com
+contexto, solução e contratos, decisões e alternativas, riscos e verificação.
+Relacione a solução aos requisitos e à aceitação da SPEC e à arquitetura obrigatória;
+justifique o local e mantenha design: inline ou separate e o link correspondente.
+Se não adotado, use design: none na SPEC, sem exigir solução fictícia ou documento
+vazio. Preserve design existente válido. A ausência não bloqueia SPEC, Arquitetura,
+Tasks ou encerramento; decisões de produto e definições obrigatórias das tarefas
+continuam necessárias. Não declare concluído um Design que não foi produzido.
 
 ### Tasks e ROADMAP
-Decomponha obrigações em ações concretas com caminho, dependência e evidência
-prevista. Priorize resultados úteis e trabalhos independentes. O roadmap resume
-os tickets e decisões de prioridade; não é outra fonte de estado ou autorização.
+
+#### Tasks
+Relacione obrigações da SPEC e do Design, quando adotado, aos tickets que as cobrem. Para lacunas,
+decomponha o trabalho em ações limitadas pelo template TASK, com requisitos,
+aceitação, verificação prevista, responsabilidades e ações humanas. Preserve IDs,
+estados, autorizações e resultados comprovados dos tickets existentes. Confira
+dependências reais e sem ciclos e identifique tarefas executáveis ou impedimentos.
+Preparação documental não autoriza implementação nem exige tickets concluídos.
+Design ausente não bloqueia preparar tarefas; sua definição suficiente continua
+obrigatória, usando SPEC e arquitetura como insumos.
+Cada ticket referencia AGENTS para regras permanentes e descreve seu plano concreto:
+exigência/cenário, comando ou procedimento, diretório, ambiente/pré-requisitos,
+resultado esperado e evidência. Defina os testes a criar/ajustar quando necessários
+e os momentos de execução. Planeje alvos descartáveis e encerramento de recursos,
+distinguindo testes permanentes e evidências a preservar. Não substitua esse plano
+por "executar testes" nem preencha Resultado com sucesso ainda não observado.
+
+#### ROADMAP
+Construa a fila pelo template ROADMAP a partir dos próprios tickets. Prioridade e
+dependências têm fonte única nos metadados dos tickets, em YAML: priority e
+dependencies. Não crie JSON paralelo nem use .sdd/execucao.json para planejar
+execução de produto. Ordene a fila por priority crescente e desempate pelo caminho
+completo, destacando dependências, bloqueios e ações humanas; registre as encerradas
+separadamente, sem reabrir trabalho para ordenar a fila. Links dos tickets identificam
+suas SPECs, sem exigir seção narrativa de entregas ou prioridades/dependências.
+
+Retire do ROADMAP o histórico detalhado após preservá-lo nos tickets/decisões
+pertinentes com origem e referências. Resuma somente trabalho, estado, executor,
+verificação e ordem reais. Adiamentos sem task devem apontar sua fonte governada;
+não invente backlog ou autorização. Mantenha ações humanas concretas e vínculos
+com dependentes. Atualize a tabela ao mudar priority, dependencies ou estado de
+ticket; não é obrigatório outro arquivo, índice ou script de sincronização.
 
 ### AGENTS e README
-Separe instruções para a IA de explicação de uso para pessoas. Registre contexto e
-comandos reais; não duplique o governador. Mantenha acionamento explícito e padrões
-de manutenção documental, sem exigir organização antes de cada tarefa comum.
+Construa AGENTS e README pelos templates próprios, aproveitando instruções locais
+e explicações válidas. AGENTS orienta a IA com contexto, referências, comandos,
+diretórios, pré-requisitos, convenções e restrições; README explica propósito,
+público e uso disponível. Confira comandos nas configurações e explicite limites
+de verificação sem inventar sucesso. Preserve blocos administrados e configurações
+particulares; CLAUDE encaminha a AGENTS e ao acionamento explícito do governador,
+sem outro procedimento. Não copie instruções preenchidas do framework nem exija
+organização antes de tarefas comuns.
+AGENTS deve cobrir contexto/escopo, comandos/verificações, higiene do workspace,
+qualidade/convenções, proteção/autorização e documentação/entrega. Derive comandos,
+diretórios, gatilhos de execução e resultados esperados dos arquivos/configurações
+reais; determine alvos temporários permitidos, identificação e encerramento de
+recursos próprios e itens a preservar. Explicite convenções e limites reais, sem
+slogans. AGENTS concentra regras permanentes; tickets detalham cenários, testes,
+evidências e limpeza de cada tarefa. Não copie o conteúdo particular do framework
+nem obrigue os consumidores a consultar sua bibliografia externa.
 
 ### Encerramento
-Relacione afirmações a evidências proporcionais. Reutilize verificações válidas e
-registre limites; não repita suítes apenas para escrever o encerramento. Passe o
-contexto necessário à execução local, com pendências reais e próxima tarefa clara.
+Delimite o escopo autorizado e relacione os objetos entregues a tickets, decisões
+e evidências reais. Atualize o resumo no ROADMAP e construa o CHECKPOINT pelo
+template, confrontando registros com arquivos e Git quando disponível. Preserve
+verificações válidas e seus limites, alterações não commitadas, adiamentos e leitura
+indispensável; não dependa de temporários como única fonte de continuidade.
+Use ADR, INBOX e VALIDATION apenas para decisões reais, propostas ainda não aceitas
+e evidências extensas pertinentes. Não repita suítes apenas para encerrar nem
+confunda pendências de implementação fora do escopo com lacunas documentais do
+pedido. No fluxo completo, confira os sete itens obrigatórios; Design não adotado
+não é pendência de encerramento nem conclusão fictícia. ADR, INBOX e VALIDATION
+são registros auxiliares condicionais, não itens adicionais do fluxo. A próxima
+ação deve permitir execução independente do projeto.
 
 ## Reconstrução e referências
 
@@ -156,7 +267,7 @@ Cada entrada em items, incluindo geral para orientações comuns, contém:
 | baseline | Referência anterior limitada à comparação enquanto não houver applied. O update a preserva; a IA limpa ao concluir. |
 | completed | IA: true quando todos os critérios de pronto do escopo estiverem atendidos; false quando faltar algum. Não há estados intermediários. |
 | evidence | Lista de strings com caminhos dos objetos e evidências concretas. Mantida pela IA. |
-| remaining | Lista de strings com condições pendentes e ações necessárias. Mantida pela IA. |
+| remaining | Lista de strings com exigências do critério de pronto pendentes e ações necessárias. Mantida pela IA. |
 | pending | Diferença consolidada, com id, title, kind e details (recurso e diff), entre applied (ou baseline) e installed. O update recalcula; a IA limpa somente ao concluir. |
 
 Campos superiores: schema_version e version administrados pelo update; items
@@ -169,7 +280,7 @@ se a mudança for revertida, o delta desaparece. A referência aplicada e as evi
 não são redefinidas pelo update. Não editar o manifesto para esconder conflitos.
 
 O critério de pronto determina se o item está concluído. Na retomada, resolva
-somente as condições não atendidas; não registrar início ou etapas intermediárias.
+somente as exigências do critério de pronto não atendidas; não registrar início ou etapas intermediárias.
 A regra geral fica no governador; a skill explica como cumpri-la e
 registrar o resultado. pending registra diferença de padrão; remaining indica somente critérios de pronto
 ainda não cumpridos. completed: true exige applied, evidence real e remaining vazio; hashes iguais não provam o conteúdo nem a implementação do produto.

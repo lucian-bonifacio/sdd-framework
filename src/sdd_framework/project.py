@@ -11,28 +11,30 @@ from .execution import EXECUTION, installed_hash, operation, refresh, snapshots,
 from .storage import SDDError, atomic_apply, digest, json_bytes, project_lock, read, read_json, safe_path
 
 START, END = "<!-- SDD:START -->", "<!-- SDD:END -->"
-GOVERNOR = "governador.md"
+GOVERNOR = "docs/governador.md"
+GOVERNOR_TEMPLATE = "governador.md"
+LEGACY_GOVERNOR = "governador.md"
 GOV_START, GOV_END = "<!-- SDD:GOVERNADOR:START -->", "<!-- SDD:GOVERNADOR:END -->"
 OLD_FLOW = "docs/FLUXO.md"
 OLD_START, OLD_END = "<!-- SDD:FLOW:START -->", "<!-- SDD:FLOW:END -->"
 MANIFEST = ".sdd/manifest.json"
 TEMPLATES = ("README", "AGENTS", "PRD", "ARCHITECTURE", "ROADMAP", "SPEC", "DESIGN", "TASK", "ADR", "INBOX", "CHECKPOINT", "VALIDATION")
-REQUIRED = {"bundle.json", GOVERNOR, "standards/CONTRATOS.md", "skill/SKILL.md", "skill/agents/openai.yaml", "integrations/codex/config.toml"}
+REQUIRED = {"bundle.json", GOVERNOR_TEMPLATE, "standards/CONTRATOS.md", "skill/SKILL.md", "skill/agents/openai.yaml", "integrations/codex/config.toml"}
 REQUIRED.update(f"templates/{name}.md" for name in TEMPLATES)
 AGENT_BLOCK = f"""{START}
-Execute governador.md somente quando o usuário solicitar expressamente o
+Execute docs/governador.md somente quando o usuário solicitar expressamente o
 governador SDD ou invocar a skill SDD. Ler arquivos, abrir uma sessão e executar
 init/update não acionam o governador. Fora dessa execução, trabalhe nas tarefas
 autorizadas do projeto e mantenha seus documentos atualizados.
 {END}"""
 CLAUDE_BLOCK = f"""{START}
-Leia AGENTS.md para as instruções deste projeto. Execute governador.md
+Leia AGENTS.md para as instruções deste projeto. Execute docs/governador.md
 somente por pedido explícito do usuário ou invocação de /sdd. Não iniciar
 organização documental automaticamente ao abrir uma sessão ou receber update.
 {END}"""
 LEGACY_BLOCK = f"""{OLD_START}
 ## Procedimento anterior desativado
-O procedimento vigente está em governador.md e só é executado por acionamento
+O procedimento vigente está em docs/governador.md e só é executado por acionamento
 explícito do usuário. O conteúdo próprio abaixo foi preservado para migração
 pelo agente durante esse acionamento. Não executar o fluxo anterior.
 {OLD_END}"""
@@ -76,10 +78,10 @@ def bundle(source: Path | None = None) -> dict[str, bytes]:
         _version(info.get("version"))
         for data in contents.values():
             data.decode("utf-8")
-        managed_section(contents[GOVERNOR].decode(), GOV_START, GOV_END, required=True)
-        if log_section(contents[GOVERNOR].decode()) is not None:
+        managed_section(contents[GOVERNOR_TEMPLATE].decode(), GOV_START, GOV_END, required=True)
+        if log_section(contents[GOVERNOR_TEMPLATE].decode()) is not None:
             raise SDDError("O registro de atualizações é gerado no consumidor, não na fonte")
-        validate(managed_section(contents[GOVERNOR].decode(), GOV_START, GOV_END, required=True), {name: data.decode() for name, data in _resources(contents).items()})
+        validate(managed_section(contents[GOVERNOR_TEMPLATE].decode(), GOV_START, GOV_END, required=True), {name: data.decode() for name, data in _resources(contents).items()})
     except (ValueError, UnicodeError) as exc:
         raise SDDError(f"Distribuição inválida: {exc}") from exc
     return contents
@@ -135,7 +137,7 @@ def _manifest(root: Path) -> dict | None:
                 raise SDDError("Hash inválido no manifesto")
             if field == "files" and not _managed_file(name, result["schema_version"] == 1):
                 raise SDDError(f"Manifesto não pode administrar documento do projeto: {name}")
-            if field == "blocks" and name not in ("AGENTS.md", "CLAUDE.md", GOVERNOR, OLD_FLOW):
+            if field == "blocks" and name not in ("AGENTS.md", "CLAUDE.md", GOVERNOR, LEGACY_GOVERNOR, OLD_FLOW):
                 raise SDDError(f"Bloco não permitido no manifesto: {name}")
     return result
 
@@ -145,7 +147,10 @@ def _resources(contents: dict[str, bytes]) -> dict[str, bytes]:
     resources["docs/padroes/CONTRATOS.md"] = contents["standards/CONTRATOS.md"]
     resources[".agents/skills/sdd/SKILL.md"] = contents["skill/SKILL.md"]
     resources[".agents/skills/sdd/agents/openai.yaml"] = contents["skill/agents/openai.yaml"]
-    resources[".claude/skills/sdd/SKILL.md"] = contents["skill/SKILL.md"].replace(b"name: sdd\n", b"name: sdd\ndisable-model-invocation: true\n", 1)
+    skill = contents["skill/SKILL.md"]
+    newline = b"\r\n" if b"\r\n" in skill else b"\n"
+    resources[".claude/skills/sdd/SKILL.md"] = skill.replace(
+        b"name: sdd" + newline, b"name: sdd" + newline + b"disable-model-invocation: true" + newline, 1)
     return resources
 
 
@@ -174,14 +179,20 @@ def _install(root: Path, contents: dict[str, bytes], previous: dict | None) -> d
         except SDDError as exc:
             raise SDDError(f"{name}: {exc}") from exc
         blocks[name] = digest(block.encode())
-    template = contents[GOVERNOR].decode().replace("{{version}}", version)
+    template = contents[GOVERNOR_TEMPLATE].decode().replace("{{version}}", version)
     desired = managed_section(template, GOV_START, GOV_END, required=True)
     current = read(root, GOVERNOR)
-    if current is None and GOVERNOR not in old_blocks:
+    migrating_governor = LEGACY_GOVERNOR != GOVERNOR and LEGACY_GOVERNOR in old_blocks
+    if migrating_governor:
+        if GOVERNOR in old_blocks or current is not None:
+            raise SDDError(f"Destino da migração já ocupado: {GOVERNOR}; conteúdo preservado")
+        current = read(root, LEGACY_GOVERNOR)
+        changes[GOVERNOR] = integrate(current, desired, old_blocks[LEGACY_GOVERNOR], GOV_START, GOV_END).encode()
+    elif current is None and GOVERNOR not in old_blocks:
         changes[GOVERNOR] = template.encode()
     else:
         if GOVERNOR not in old_blocks and current != template:
-            raise SDDError("governador.md já existe sem procedência; conteúdo preservado")
+            raise SDDError(f"{GOVERNOR} já existe sem procedência; conteúdo preservado")
         changes[GOVERNOR] = integrate(current, desired, old_blocks.get(GOVERNOR), GOV_START, GOV_END).encode()
     blocks[GOVERNOR] = digest(desired.encode())
     old_resources = {name: read(root, name) or "" for name in old_files if not name.startswith(".sdd/framework/")}
@@ -220,7 +231,8 @@ def _install(root: Path, contents: dict[str, bytes], previous: dict | None) -> d
     manifest = {"schema_version": 2, "version": version, "files": {name: digest(data) for name, data in resources.items()}, "blocks": blocks}
     manifest["execution_hash"] = installed_hash(state)
     changes[MANIFEST] = json_bytes(manifest)
-    removals = tuple(sorted(set(old_files) - resources.keys()))
+    removals = tuple(sorted((set(old_files) - resources.keys()) |
+                            ({LEGACY_GOVERNOR} if migrating_governor else set())))
     changed = [name for name, data in changes.items() if read(root, name) != data.decode()]
     atomic_apply(root, changes, removals=removals)
     return {"version": version, "changed": changed, "removed": list(removals), "governor_executed": False,
@@ -236,7 +248,7 @@ def initialize(root: Path) -> dict:
         previous = _manifest(root)
         if previous is not None:
             return {"version": previous["version"], "changed": [], "removed": [], "already_initialized": True,
-                    "governor_executed": False, "note": "Instalação já existe. Use update para atualizar recursos; acione governador.md explicitamente na IA."}
+                    "governor_executed": False, "note": "Instalação já existe. Use update para atualizar recursos; acione docs/governador.md explicitamente na IA."}
         return _install(root, contents, None)
 
 

@@ -2,7 +2,7 @@
 
 ## Objetivo
 Organizar projetos com padrões documentais e um procedimento único dirigido à IA:
-[governador.md](governador.md). Versão **0.4.2**, Python 3.11+ e biblioteca padrão.
+[docs/governador.md](docs/governador.md). Versão **0.4.2**, Python 3.11+ e biblioteca padrão.
 
 O usuário aciona o governador. Ele orienta criação ou reconstrução de PRD,
 arquitetura, roadmap, SPECs, tarefas e instruções dos agentes. Ao concluir a
@@ -17,13 +17,13 @@ python3 /caminho/sdd-framework/sdd.py init .
 
 Depois, abra seu agente e solicite:
 
-> Execute governador.md para organizar este projeto conforme os padrões SDD.
+> Execute docs/governador.md para organizar este projeto conforme os padrões SDD.
 
 Também é possível invocar explicitamente a skill SDD. Ler o arquivo, iniciar uma
 sessão e executar init/update não acionam o procedimento.
 
 A instalação prepara somente:
-- `governador.md`: instruções para a IA;
+- `docs/governador.md`: instruções para a IA;
 - `docs/padroes/`: contratos e doze templates de documentos;
 - `.agents/skills/sdd/` e `.claude/skills/sdd/`: a mesma skill, com controles nativos de acionamento explícito;
 - `.codex/config.toml`, se ausente; configurações existentes são preservadas;
@@ -80,7 +80,7 @@ migração pelo agente explicitamente acionado. Nenhuma regra antiga continua
 sendo exigida pela CLI nova.
 
 ## Padrões e documentos
-O [governador](governador.md) é o único procedimento. Os
+O [governador](docs/governador.md) é o único procedimento. Os
 [contratos](docs/padroes/CONTRATOS.md) e templates definem a forma dos documentos;
 a skill orienta como aplicar o procedimento e registrar evidências. O governador escreve instruções para
 a IA, com linguagem clara para revisão e contestação humanas.
@@ -88,11 +88,23 @@ Na execução, são usados exclusivamente os templates, contratos e a skill pró
 do SDD Framework. Repositórios externos servem somente de inspiração ao desenvolvimento;
 não são consultas, templates alternativos ou procedimentos do consumidor.
 
-O procedimento começa por PRD e SPECs. Cada artefato tem seu próprio objetivo,
+O procedimento começa por PRD e SPECs. Arquitetura é obrigatória; Design tem
+seção própria, é o único item opcional e é recomendado. Sua ausência não impede
+concluir SPECs, preparar Tasks ou encerrar o fluxo obrigatório. Cada artefato tem seu próprio objetivo,
 objeto, templates/skill/referências e operação unificada, com ou sem documentos
 anteriores. A regra de execução/reexecução é única, anterior aos itens, e trata
 somente operações alteradas e impactos diretos. Ações e resultados ficam nos tickets, decisões nas ADRs e passagem no checkpoint;
 estado técnico, evidências e pendências ficam em .sdd/execucao.json.
+
+Os documentos produzidos devem conter ações, referências e verificações concretas
+do consumidor. AGENTS concentra as regras permanentes de execução, testes,
+higiene, qualidade, proteção e entrega; os tickets detalham cenários, comandos,
+resultados esperados, evidências e limpeza. Informação indispensável ausente vira
+pendência; init/update distribuem esses padrões sem produzir o conteúdo do produto.
+O ROADMAP apresenta a fila de tasks e as encerradas. Priority e dependencies ficam
+nos tickets: menor priority vem primeiro entre tarefas autorizadas e sem impedimentos,
+com padrão 100 e desempate por caminho. Uma task criada depois pode vir antes;
+não há outro JSON de planejamento nem prioridade implícita pela ordem do ID.
 
 Projetos existentes têm conteúdo classificado como aproveitar ou conflito.
 Conhecimento útil migra para os documentos padrão; arquivos de mesma função
